@@ -1,0 +1,604 @@
+{
+  "timestamp": "2026-04-14T11:17:41.999147",
+  "test_type": "ip_camera",
+  "camera_url": "rtsp://192.168.1.71:554/11?tcp",
+  "frames_processed": 206,
+  "total_detections": 106,
+  "fps": {
+    "average": 3.7864692802638507,
+    "min": 0.27620353684801113,
+    "max": 12.577755120400635
+  },
+  "class_statistics": {
+    "person": {
+      "count": 80,
+      "avg_confidence": 0.5619079407304526,
+      "min_confidence": 0.4017185568809509,
+      "max_confidence": 0.8188494443893433
+    },
+    "umbrella": {
+      "count": 2,
+      "avg_confidence": 0.45462238788604736,
+      "min_confidence": 0.4533189833164215,
+      "max_confidence": 0.4559257924556732
+    },
+    "boat": {
+      "count": 5,
+      "avg_confidence": 0.5021870911121369,
+      "min_confidence": 0.4112261235713959,
+      "max_confidence": 0.6611294746398926
+    },
+    "cell phone": {
+      "count": 12,
+      "avg_confidence": 0.5973384057482084,
+      "min_confidence": 0.40232765674591064,
+      "max_confidence": 0.8701095581054688
+    },
+    "traffic light": {
+      "count": 2,
+      "avg_confidence": 0.4662824869155884,
+      "min_confidence": 0.40560775995254517,
+      "max_confidence": 0.5269572138786316
+    },
+    "airplane": {
+      "count": 5,
+      "avg_confidence": 0.5471221566200256,
+      "min_confidence": 0.4339791238307953,
+      "max_confidence": 0.6633883714675903
+    }
+  },
+  "detections": [
+    {
+      "frame": 2,
+      "timestamp": "2026-04-14T11:16:42.692789",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5134357213973999
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "timestamp": "2026-04-14T11:16:43.379105",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.6069876551628113
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "timestamp": "2026-04-14T11:16:43.616775",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.6071624755859375
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "timestamp": "2026-04-14T11:16:43.911150",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.6000903844833374
+        }
+      ]
+    },
+    {
+      "frame": 8,
+      "timestamp": "2026-04-14T11:16:44.203511",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5788241028785706
+        },
+        {
+          "class": "person",
+          "confidence": 0.4017185568809509
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "timestamp": "2026-04-14T11:16:44.523283",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5579518675804138
+        },
+        {
+          "class": "person",
+          "confidence": 0.42760953307151794
+        }
+      ]
+    },
+    {
+      "frame": 10,
+      "timestamp": "2026-04-14T11:16:44.850134",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4586964249610901
+        }
+      ]
+    },
+    {
+      "frame": 11,
+      "timestamp": "2026-04-14T11:16:45.160491",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4333691895008087
+        }
+      ]
+    },
+    {
+      "frame": 12,
+      "timestamp": "2026-04-14T11:16:45.489849",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5025977492332458
+        }
+      ]
+    },
+    {
+      "frame": 13,
+      "timestamp": "2026-04-14T11:16:45.775499",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4462854862213135
+        }
+      ]
+    },
+    {
+      "frame": 14,
+      "timestamp": "2026-04-14T11:16:46.108879",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4320279359817505
+        },
+        {
+          "class": "person",
+          "confidence": 0.41069233417510986
+        }
+      ]
+    },
+    {
+      "frame": 15,
+      "timestamp": "2026-04-14T11:16:46.432247",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.44999292492866516
+        },
+        {
+          "class": "person",
+          "confidence": 0.44017788767814636
+        }
+      ]
+    },
+    {
+      "frame": 16,
+      "timestamp": "2026-04-14T11:16:46.728488",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.43891873955726624
+        }
+      ]
+    },
+    {
+      "frame": 18,
+      "timestamp": "2026-04-14T11:16:47.377903",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5093005299568176
+        }
+      ]
+    },
+    {
+      "frame": 20,
+      "timestamp": "2026-04-14T11:16:47.917243",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4337592124938965
+        }
+      ]
+    },
+    {
+      "frame": 21,
+      "timestamp": "2026-04-14T11:16:48.222629",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5288745760917664
+        }
+      ]
+    },
+    {
+      "frame": 22,
+      "timestamp": "2026-04-14T11:16:48.502798",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.41489189863204956
+        }
+      ]
+    },
+    {
+      "frame": 23,
+      "timestamp": "2026-04-14T11:16:48.778762",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5440751910209656
+        }
+      ]
+    },
+    {
+      "frame": 24,
+      "timestamp": "2026-04-14T11:16:49.078513",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5412008166313171
+        }
+      ]
+    },
+    {
+      "frame": 25,
+      "timestamp": "2026-04-14T11:16:49.424153",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4563530683517456
+        }
+      ]
+    },
+    {
+      "frame": 27,
+      "timestamp": "2026-04-14T11:16:50.131559",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4447147846221924
+        }
+      ]
+    },
+    {
+      "frame": 30,
+      "timestamp": "2026-04-14T11:16:51.060271",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4087173044681549
+        }
+      ]
+    },
+    {
+      "frame": 31,
+      "timestamp": "2026-04-14T11:16:51.325491",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4689023196697235
+        },
+        {
+          "class": "person",
+          "confidence": 0.44531500339508057
+        }
+      ]
+    },
+    {
+      "frame": 32,
+      "timestamp": "2026-04-14T11:16:51.622004",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4160230755805969
+        }
+      ]
+    },
+    {
+      "frame": 33,
+      "timestamp": "2026-04-14T11:16:51.938601",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5250285267829895
+        },
+        {
+          "class": "person",
+          "confidence": 0.4146161377429962
+        }
+      ]
+    },
+    {
+      "frame": 34,
+      "timestamp": "2026-04-14T11:16:52.227967",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4944016635417938
+        },
+        {
+          "class": "umbrella",
+          "confidence": 0.4559257924556732
+        },
+        {
+          "class": "person",
+          "confidence": 0.42253169417381287
+        }
+      ]
+    },
+    {
+      "frame": 35,
+      "timestamp": "2026-04-14T11:16:52.565912",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.47073253989219666
+        }
+      ]
+    },
+    {
+      "frame": 36,
+      "timestamp": "2026-04-14T11:16:52.836947",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5078496336936951
+        }
+      ]
+    },
+    {
+      "frame": 37,
+      "timestamp": "2026-04-14T11:16:53.107537",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5351731777191162
+        },
+        {
+          "class": "person",
+          "confidence": 0.46256136894226074
+        }
+      ]
+    },
+    {
+      "frame": 38,
+      "timestamp": "2026-04-14T11:16:53.396222",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5616611242294312
+        },
+        {
+          "class": "person",
+          "confidence": 0.4600233733654022
+        }
+      ]
+    },
+    {
+      "frame": 39,
+      "timestamp": "2026-04-14T11:16:53.676616",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5571514964103699
+        }
+      ]
+    },
+    {
+      "frame": 40,
+      "timestamp": "2026-04-14T11:16:53.947072",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.6035995483398438
+        },
+        {
+          "class": "person",
+          "confidence": 0.5037683844566345
+        }
+      ]
+    },
+    {
+      "frame": 41,
+      "timestamp": "2026-04-14T11:16:54.245110",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4840325713157654
+        }
+      ]
+    },
+    {
+      "frame": 42,
+      "timestamp": "2026-04-14T11:16:54.552663",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.41784176230430603
+        }
+      ]
+    },
+    {
+      "frame": 44,
+      "timestamp": "2026-04-14T11:16:55.125405",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4396146833896637
+        }
+      ]
+    },
+    {
+      "frame": 45,
+      "timestamp": "2026-04-14T11:16:55.400181",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.42856574058532715
+        }
+      ]
+    },
+    {
+      "frame": 46,
+      "timestamp": "2026-04-14T11:16:55.680697",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5329995155334473
+        }
+      ]
+    },
+    {
+      "frame": 47,
+      "timestamp": "2026-04-14T11:16:55.959843",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5975216627120972
+        }
+      ]
+    },
+    {
+      "frame": 48,
+      "timestamp": "2026-04-14T11:16:56.216648",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5363950133323669
+        },
+        {
+          "class": "person",
+          "confidence": 0.5034124255180359
+        }
+      ]
+    },
+    {
+      "frame": 49,
+      "timestamp": "2026-04-14T11:16:56.496017",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5875782370567322
+        },
+        {
+          "class": "person",
+          "confidence": 0.4642092287540436
+        }
+      ]
+    },
+    {
+      "frame": 50,
+      "timestamp": "2026-04-14T11:16:56.776297",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.524148166179657
+        }
+      ]
+    },
+    {
+      "frame": 51,
+      "timestamp": "2026-04-14T11:16:57.155558",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.6312005519866943
+        }
+      ]
+    },
+    {
+      "frame": 52,
+      "timestamp": "2026-04-14T11:16:57.435889",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5809276700019836
+        }
+      ]
+    },
+    {
+      "frame": 58,
+      "timestamp": "2026-04-14T11:16:59.183902",
+      "detections": [
+        {
+          "class": "umbrella",
+          "confidence": 0.4533189833164215
+        }
+      ]
+    },
+    {
+      "frame": 78,
+      "timestamp": "2026-04-14T11:17:08.120643",
+      "detections": [
+        {
+          "class": "boat",
+          "confidence": 0.4319052994251251
+        }
+      ]
+    },
+    {
+      "frame": 79,
+      "timestamp": "2026-04-14T11:17:08.366995",
+      "detections": [
+        {
+          "class": "boat",
+          "confidence": 0.4344387948513031
+        }
+      ]
+    },
+    {
+      "frame": 80,
+      "timestamp": "2026-04-14T11:17:08.677526",
+      "detections": [
+        {
+          "class": "boat",
+          "confidence": 0.6611294746398926
+        }
+      ]
+    },
+    {
+      "frame": 81,
+      "timestamp": "2026-04-14T11:17:08.935386",
+      "detections": [
+        {
+          "class": "boat",
+          "confidence": 0.5722357630729675
+        }
+      ]
+    },
+    {
+      "frame": 84,
+      "timestamp": "2026-04-14T11:17:09.780818",
+      "detections": [
+        {
+          "class": "boat",
+          "confidence": 0.4112261235713959
+        }
+      ]
+    },
+    {
+      "frame": 89,
+      "timestamp": "2026-04-14T11:17:11.182052",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.8188494443893433
+        }
+      ]
+    }
+  ]
+}

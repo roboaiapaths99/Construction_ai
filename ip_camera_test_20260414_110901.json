@@ -1,0 +1,614 @@
+{
+  "timestamp": "2026-04-14T11:09:01.945332",
+  "test_type": "ip_camera",
+  "camera_url": "rtsp://192.168.1.71:554/11?tcp",
+  "frames_processed": 201,
+  "total_detections": 82,
+  "fps": {
+    "average": 3.986037860339708,
+    "min": 0.2595879028179276,
+    "max": 13.942114832949404
+  },
+  "class_statistics": {
+    "person": {
+      "count": 25,
+      "avg_confidence": 0.5361074078083038,
+      "min_confidence": 0.41053444147109985,
+      "max_confidence": 0.8078104853630066
+    },
+    "airplane": {
+      "count": 42,
+      "avg_confidence": 0.4830890567529769,
+      "min_confidence": 0.40118667483329773,
+      "max_confidence": 0.6028932929039001
+    },
+    "fire hydrant": {
+      "count": 6,
+      "avg_confidence": 0.5248083372910818,
+      "min_confidence": 0.4032459557056427,
+      "max_confidence": 0.6516792178153992
+    },
+    "bench": {
+      "count": 1,
+      "avg_confidence": 0.5267658829689026,
+      "min_confidence": 0.5267658829689026,
+      "max_confidence": 0.5267658829689026
+    },
+    "vase": {
+      "count": 1,
+      "avg_confidence": 0.6348631978034973,
+      "min_confidence": 0.6348631978034973,
+      "max_confidence": 0.6348631978034973
+    },
+    "bottle": {
+      "count": 2,
+      "avg_confidence": 0.46093596518039703,
+      "min_confidence": 0.459038645029068,
+      "max_confidence": 0.4628332853317261
+    },
+    "traffic light": {
+      "count": 1,
+      "avg_confidence": 0.45889338850975037,
+      "min_confidence": 0.45889338850975037,
+      "max_confidence": 0.45889338850975037
+    },
+    "boat": {
+      "count": 1,
+      "avg_confidence": 0.42106708884239197,
+      "min_confidence": 0.42106708884239197,
+      "max_confidence": 0.42106708884239197
+    },
+    "clock": {
+      "count": 1,
+      "avg_confidence": 0.4925845265388489,
+      "min_confidence": 0.4925845265388489,
+      "max_confidence": 0.4925845265388489
+    },
+    "train": {
+      "count": 1,
+      "avg_confidence": 0.47968876361846924,
+      "min_confidence": 0.47968876361846924,
+      "max_confidence": 0.47968876361846924
+    },
+    "sink": {
+      "count": 1,
+      "avg_confidence": 0.4466659426689148,
+      "min_confidence": 0.4466659426689148,
+      "max_confidence": 0.4466659426689148
+    }
+  },
+  "detections": [
+    {
+      "frame": 0,
+      "timestamp": "2026-04-14T11:08:02.235114",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4825032353401184
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "timestamp": "2026-04-14T11:08:02.613892",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5277940630912781
+        }
+      ]
+    },
+    {
+      "frame": 11,
+      "timestamp": "2026-04-14T11:08:05.466714",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.457010418176651
+        }
+      ]
+    },
+    {
+      "frame": 15,
+      "timestamp": "2026-04-14T11:08:06.523190",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5127028822898865
+        }
+      ]
+    },
+    {
+      "frame": 16,
+      "timestamp": "2026-04-14T11:08:06.797228",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4159204065799713
+        }
+      ]
+    },
+    {
+      "frame": 18,
+      "timestamp": "2026-04-14T11:08:07.337748",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5080189108848572
+        }
+      ]
+    },
+    {
+      "frame": 19,
+      "timestamp": "2026-04-14T11:08:07.602214",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.43736517429351807
+        }
+      ]
+    },
+    {
+      "frame": 20,
+      "timestamp": "2026-04-14T11:08:08.821023",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4618406891822815
+        },
+        {
+          "class": "airplane",
+          "confidence": 0.4272928535938263
+        }
+      ]
+    },
+    {
+      "frame": 21,
+      "timestamp": "2026-04-14T11:08:09.005771",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4211302399635315
+        }
+      ]
+    },
+    {
+      "frame": 23,
+      "timestamp": "2026-04-14T11:08:09.388011",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5649961829185486
+        },
+        {
+          "class": "airplane",
+          "confidence": 0.5492132902145386
+        }
+      ]
+    },
+    {
+      "frame": 26,
+      "timestamp": "2026-04-14T11:08:10.092570",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5374062657356262
+        }
+      ]
+    },
+    {
+      "frame": 29,
+      "timestamp": "2026-04-14T11:08:10.857806",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4535220265388489
+        }
+      ]
+    },
+    {
+      "frame": 31,
+      "timestamp": "2026-04-14T11:08:11.383531",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.40717294812202454
+        }
+      ]
+    },
+    {
+      "frame": 32,
+      "timestamp": "2026-04-14T11:08:11.671205",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4912245273590088
+        }
+      ]
+    },
+    {
+      "frame": 35,
+      "timestamp": "2026-04-14T11:08:12.441027",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5390344262123108
+        }
+      ]
+    },
+    {
+      "frame": 38,
+      "timestamp": "2026-04-14T11:08:13.205096",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4740329682826996
+        },
+        {
+          "class": "airplane",
+          "confidence": 0.40804192423820496
+        }
+      ]
+    },
+    {
+      "frame": 41,
+      "timestamp": "2026-04-14T11:08:13.958916",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.44349178671836853
+        }
+      ]
+    },
+    {
+      "frame": 43,
+      "timestamp": "2026-04-14T11:08:14.468796",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.48777714371681213
+        }
+      ]
+    },
+    {
+      "frame": 44,
+      "timestamp": "2026-04-14T11:08:14.706695",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.49143749475479126
+        }
+      ]
+    },
+    {
+      "frame": 47,
+      "timestamp": "2026-04-14T11:08:15.423051",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.40118667483329773
+        }
+      ]
+    },
+    {
+      "frame": 48,
+      "timestamp": "2026-04-14T11:08:15.656238",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4203239977359772
+        }
+      ]
+    },
+    {
+      "frame": 50,
+      "timestamp": "2026-04-14T11:08:16.133942",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.44342538714408875
+        }
+      ]
+    },
+    {
+      "frame": 51,
+      "timestamp": "2026-04-14T11:08:16.378562",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.47715362906455994
+        }
+      ]
+    },
+    {
+      "frame": 53,
+      "timestamp": "2026-04-14T11:08:16.961456",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.46277639269828796
+        }
+      ]
+    },
+    {
+      "frame": 54,
+      "timestamp": "2026-04-14T11:08:17.233113",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5180736780166626
+        }
+      ]
+    },
+    {
+      "frame": 56,
+      "timestamp": "2026-04-14T11:08:17.761895",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4605870246887207
+        }
+      ]
+    },
+    {
+      "frame": 59,
+      "timestamp": "2026-04-14T11:08:18.521158",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5391845107078552
+        }
+      ]
+    },
+    {
+      "frame": 62,
+      "timestamp": "2026-04-14T11:08:19.290865",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.6028932929039001
+        }
+      ]
+    },
+    {
+      "frame": 64,
+      "timestamp": "2026-04-14T11:08:19.870199",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.43960097432136536
+        }
+      ]
+    },
+    {
+      "frame": 66,
+      "timestamp": "2026-04-14T11:08:20.428739",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.45438623428344727
+        }
+      ]
+    },
+    {
+      "frame": 68,
+      "timestamp": "2026-04-14T11:08:20.989229",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5201776027679443
+        }
+      ]
+    },
+    {
+      "frame": 69,
+      "timestamp": "2026-04-14T11:08:21.292320",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5818522572517395
+        }
+      ]
+    },
+    {
+      "frame": 70,
+      "timestamp": "2026-04-14T11:08:21.567931",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4916588068008423
+        }
+      ]
+    },
+    {
+      "frame": 71,
+      "timestamp": "2026-04-14T11:08:21.825318",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5772881507873535
+        }
+      ]
+    },
+    {
+      "frame": 72,
+      "timestamp": "2026-04-14T11:08:22.086960",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4130217134952545
+        }
+      ]
+    },
+    {
+      "frame": 73,
+      "timestamp": "2026-04-14T11:08:22.365808",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4861159920692444
+        }
+      ]
+    },
+    {
+      "frame": 74,
+      "timestamp": "2026-04-14T11:08:22.625331",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4400195777416229
+        }
+      ]
+    },
+    {
+      "frame": 75,
+      "timestamp": "2026-04-14T11:08:22.900310",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5792377591133118
+        }
+      ]
+    },
+    {
+      "frame": 77,
+      "timestamp": "2026-04-14T11:08:23.435535",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.4283214211463928
+        }
+      ]
+    },
+    {
+      "frame": 79,
+      "timestamp": "2026-04-14T11:08:28.354579",
+      "detections": [
+        {
+          "class": "airplane",
+          "confidence": 0.5360286831855774
+        }
+      ]
+    },
+    {
+      "frame": 82,
+      "timestamp": "2026-04-14T11:08:28.771787",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4716363549232483
+        }
+      ]
+    },
+    {
+      "frame": 83,
+      "timestamp": "2026-04-14T11:08:28.913402",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.639058530330658
+        }
+      ]
+    },
+    {
+      "frame": 84,
+      "timestamp": "2026-04-14T11:08:29.075834",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.4995076656341553
+        }
+      ]
+    },
+    {
+      "frame": 85,
+      "timestamp": "2026-04-14T11:08:29.273741",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.46614378690719604
+        },
+        {
+          "class": "fire hydrant",
+          "confidence": 0.42173629999160767
+        },
+        {
+          "class": "person",
+          "confidence": 0.41053444147109985
+        }
+      ]
+    },
+    {
+      "frame": 86,
+      "timestamp": "2026-04-14T11:08:29.490962",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.47705990076065063
+        }
+      ]
+    },
+    {
+      "frame": 94,
+      "timestamp": "2026-04-14T11:08:31.445089",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.6184015870094299
+        }
+      ]
+    },
+    {
+      "frame": 95,
+      "timestamp": "2026-04-14T11:08:31.696488",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5940333604812622
+        },
+        {
+          "class": "fire hydrant",
+          "confidence": 0.4032459557056427
+        }
+      ]
+    },
+    {
+      "frame": 96,
+      "timestamp": "2026-04-14T11:08:31.931567",
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.5636685490608215
+        },
+        {
+          "class": "fire hydrant",
+          "confidence": 0.4892061650753021
+        }
+      ]
+    },
+    {
+      "frame": 97,
+      "timestamp": "2026-04-14T11:08:32.200530",
+      "detections": [
+        {
+          "class": "fire hydrant",
+          "confidence": 0.6516792178153992
+        },
+        {
+          "class": "person",
+          "confidence": 0.5653018355369568
+        }
+      ]
+    },
+    {
+      "frame": 98,
+      "timestamp": "2026-04-14T11:08:32.468104",
+      "detections": [
+        {
+          "class": "fire hydrant",
+          "confidence": 0.5727885365486145
+        }
+      ]
+    }
+  ]
+}

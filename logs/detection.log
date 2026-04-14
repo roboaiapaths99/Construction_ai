@@ -1,0 +1,41 @@
+2026-03-27 17:20:15,123 - ai_detection - INFO - Processing frame: 1280x720
+2026-03-27 17:20:15,124 - ai_detection - DEBUG - Input shape: (1, 3, 640, 640)
+2026-03-27 17:20:15,125 - ai_detection - INFO - Detections found: 3
+2026-03-27 17:20:15,126 - ai_detection - DEBUG - Detection 0: class=person, confidence=0.95, bbox=[100,100,200,300]
+2026-03-27 17:20:15,127 - ai_detection - DEBUG - Detection 1: class=hard_hat, confidence=0.87, bbox=[150,50,80,60]
+2026-03-27 17:20:15,128 - ai_detection - DEBUG - Detection 2: class=person, confidence=0.89, bbox=[400,150,180,280]
+2026-03-27 17:20:15,129 - ai_detection - INFO - Violations detected: 1
+2026-03-27 17:20:15,130 - ai_detection - WARNING - VIOLATION: No safety vest detected for person at [400,150]
+2026-03-27 17:20:15,131 - ai_detection - INFO - Alert generated: medium severity
+2026-03-27 17:20:15,132 - ai_detection - INFO - Processing time: 45ms
+2026-03-27 17:20:20,234 - ai_detection - INFO - Processing frame: 1280x720
+2026-03-27 17:20:20,235 - ai_detection - DEBUG - Input shape: (1, 3, 640, 640)
+2026-03-27 17:20:20,236 - ai_detection - INFO - Detections found: 2
+2026-03-27 17:20:20,237 - ai_detection - DEBUG - Detection 0: class=person, confidence=0.92, bbox=[120,110,190,290]
+2026-03-27 17:20:20,238 - ai_detection - DEBUG - Detection 1: class=person, confidence=0.88, bbox=[380,140,185,275]
+2026-03-27 17:20:20,239 - ai_detection - INFO - Violations detected: 2
+2026-03-27 17:20:20,240 - ai_detection - WARNING - VIOLATION: No hard hat detected for person at [120,110]
+2026-03-27 17:20:20,241 - ai_detection - WARNING - VIOLATION: No safety vest detected for person at [380,140]
+2026-03-27 17:20:20,242 - ai_detection - INFO - Alerts generated: 2 medium severity
+2026-03-27 17:20:20,243 - ai_detection - INFO - Processing time: 42ms
+2026-03-27 17:20:25,345 - ai_detection - INFO - Processing frame: 1280x720
+2026-03-27 17:20:25,346 - ai_detection - DEBUG - Input shape: (1, 3, 640, 640)
+2026-03-27 17:20:25,347 - ai_detection - INFO - Detections found: 4
+2026-03-27 17:20:25,348 - ai_detection - DEBUG - Detection 0: class=person, confidence=0.94, bbox=[110,105,195,295]
+2026-03-27 17:20:25,349 - ai_detection - DEBUG - Detection 1: class=hard_hat, confidence=0.91, bbox=[145,48,75,58]
+2026-03-27 17:20:25,350 - ai_detection - DEBUG - Detection 2: class=safety_vest, confidence=0.85, bbox=[125,140,165,180]
+2026-03-27 17:20:25,351 - ai_detection - DEBUG - Detection 3: class=person, confidence=0.90, bbox=[390,145,180,270]
+2026-03-27 17:20:25,352 - ai_detection - INFO - Violations detected: 1
+2026-03-27 17:20:25,353 - ai_detection - WARNING - VIOLATION: No hard hat detected for person at [390,145]
+2026-03-27 17:20:25,354 - ai_detection - INFO - Alert generated: medium severity
+2026-03-27 17:20:25,355 - ai_detection - INFO - Processing time: 48ms
+2026-03-27 17:20:30,456 - ai_detection - INFO - Processing frame: 1280x720
+2026-03-27 17:20:30,457 - ai_detection - DEBUG - Input shape: (1, 3, 640, 640)
+2026-03-27 17:20:30,458 - ai_detection - INFO - Detections found: 1
+2026-03-27 17:20:30,459 - ai_detection - DEBUG - Detection 0: class=person, confidence=0.88, bbox=[130,115,185,285]
+2026-03-27 17:20:30,460 - ai_detection - INFO - Violations detected: 2
+2026-03-27 17:20:30,461 - ai_detection - WARNING - VIOLATION: No hard hat detected for person at [130,115]
+2026-03-27 17:20:30,462 - ai_detection - WARNING - VIOLATION: No safety vest detected for person at [130,115]
+2026-03-27 17:20:30,463 - ai_detection - ERROR - MULTIPLE VIOLATIONS: Person missing both hard hat and safety vest
+2026-03-27 17:20:30,464 - ai_detection - INFO - Alert generated: high severity
+2026-03-27 17:20:30,465 - ai_detection - INFO - Processing time: 51ms

@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WEBSOCKET_URL=ws://localhost:8000/ws
+    depends_on:
+      - backend
+    networks:
+      - construction-ai
+
+  backend:
+    image: python:3.9
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/app
+    command: uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root123
+      - MYSQL_DATABASE=safety_ai
+    depends_on:
+      - mysql
+    networks:
+      - construction-ai
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=safety_ai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - construction-ai
+
+volumes:
+  mysql_data:
+
+networks:
+  construction-ai:
+    driver: bridge
