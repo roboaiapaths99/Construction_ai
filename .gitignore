@@ -25,3 +25,4 @@ Thumbs.db
 datasets/
 runs/
 weights/
+node_modules

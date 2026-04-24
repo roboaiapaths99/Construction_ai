@@ -1,0 +1,332 @@
+/* Production-grade CSS utilities and animations */
+
+/* CSS Variables for theming */
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --success-color: #22c55e;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
+/* Custom button styles */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 
+         inline-flex items-center justify-center 
+         focus:outline-none focus:ring-2 focus:ring-offset-2
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply bg-primary-600 text-white hover:bg-primary-700 
+         focus:ring-primary-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 text-gray-900 hover:bg-gray-200 
+         focus:ring-gray-500;
+}
+
+.btn-danger {
+  @apply bg-danger-600 text-white hover:bg-danger-700 
+         focus:ring-danger-500;
+}
+
+.btn-success {
+  @apply bg-success-600 text-white hover:bg-success-700 
+         focus:ring-success-500;
+}
+
+.btn-ghost {
+  @apply bg-transparent text-primary-600 hover:bg-primary-50 
+         focus:ring-primary-500 border border-gray-200;
+}
+
+.btn-sm {
+  @apply px-2 py-1 text-sm;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-lg;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 
+         border border-gray-100
+         hover:shadow-lg transition-shadow duration-200;
+}
+
+.card-hover {
+  @apply cursor-pointer hover:shadow-lg 
+         hover:-translate-y-1 transition-all duration-200;
+}
+
+/* Input styles */
+.input-base {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg
+         text-gray-900 placeholder-gray-400
+         focus:outline-none focus:ring-2 focus:ring-primary-500 
+         focus:border-transparent
+         transition-colors duration-200
+         disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;
+}
+
+.textarea-base {
+  @apply input-base min-h-[100px];
+}
+
+.select-base {
+  @apply input-base appearance-none pr-8 bg-no-repeat bg-right 
+         bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20fill%3D%22%234b5563%22%20%2F%3E%3C%2Fsvg%3E')];
+}
+
+/* Badge styles */
+.badge {
+  @apply inline-block px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.badge-primary {
+  @apply bg-blue-50 text-blue-900;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-900;
+}
+
+.badge-warning {
+  @apply bg-amber-100 text-amber-900;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-900;
+}
+
+/* Alert styles */
+.alert {
+  @apply rounded-lg p-4 border;
+}
+
+.alert-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.alert-warning {
+  @apply bg-amber-50 border-amber-200 text-amber-800;
+}
+
+.alert-danger {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.alert-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translate3d(40px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    #f0f0f0 0%,
+    #f9f9f9 50%,
+    #f0f0f0 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Skeleton loader */
+.skeleton {
+  @apply bg-gray-200 rounded animate-pulse;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 mb-2;
+}
+
+.skeleton-avatar {
+  @apply skeleton h-10 w-10 rounded-full;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Utilities */
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+  }
+  
+  .card {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
+
+/* Responsive table wrapper */
+.table-responsive {
+  @apply overflow-x-auto rounded-lg border border-gray-200;
+}
+
+.table-responsive table {
+  @apply w-full min-w-max;
+}
+
+/* Status indicators */
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full;
+}
+
+.status-online {
+  @apply bg-success-500;
+}
+
+.status-offline {
+  @apply bg-gray-400;
+}
+
+.status-pending {
+  @apply bg-warning-500;
+}
+
+.status-error {
+  @apply bg-danger-500;
+}
+
+/* Grid helpers */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Flex helpers */
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex items-center justify-between;
+}
+
+/* Typography */
+.text-truncate {
+  @apply truncate;
+}
+
+.font-display {
+  @apply font-sans font-bold;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}

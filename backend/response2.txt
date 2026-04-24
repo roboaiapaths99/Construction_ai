@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+date: Thu, 16 Apr 2026 20:33:14 GMT
+server: uvicorn
+content-length: 26
+content-type: application/json
+
+{"employees":[],"total":0}
