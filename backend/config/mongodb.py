@@ -47,14 +47,18 @@ class MongoDBConfig:
         try:
             if MongoDBConfig._client is None:
                 connection_string = MongoDBConfig.get_connection_string()
+                # Added more robust connection options
                 MongoDBConfig._client = MongoClient(
                     connection_string,
                     serverSelectionTimeoutMS=MongoDBConfig.TIMEOUT,
-                    connectTimeoutMS=MongoDBConfig.TIMEOUT
+                    connectTimeoutMS=MongoDBConfig.TIMEOUT,
+                    retryWrites=True,
+                    # Fallback for older TLS environments if needed
+                    tlsAllowInvalidCertificates=False 
                 )
             return MongoDBConfig._client
         except Exception as e:
-            print(f"❌ MongoDB connection error: {e}")
+            print(f"❌ MongoDB client initialization error: {e}")
             return None
     
     @staticmethod
@@ -65,11 +69,22 @@ class MongoDBConfig:
             if client is None:
                 return None
             
-            db = client[MongoDBConfig.DATABASE]
-            print(f"✅ Connected to MongoDB database: {MongoDBConfig.DATABASE}")
+            # Use DATABASE_NAME or fallback to safety_ai
+            db_name = MongoDBConfig.DATABASE
+            db = client[db_name]
+            
+            # Trigger an actual connection check
+            client.admin.command('ping')
+            
+            if MongoDBConfig._db is None:
+                print(f"✅ Successfully connected to MongoDB database: {db_name}")
+                MongoDBConfig._db = db
+                
             return db
         except Exception as e:
-            print(f"❌ Database connection error: {e}")
+            print(f"❌ Database connection error (handshake failed?): {e}")
+            if "SSL handshake failed" in str(e):
+                print("💡 TIP: Check if your VPS IP is whitelisted in MongoDB Atlas Network Access!")
             return None
     
     @staticmethod
