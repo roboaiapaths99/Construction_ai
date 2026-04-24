@@ -16,9 +16,11 @@ from PIL import Image
 import io
 import uuid
 
-# Import worker database and face embedding modules
-from config.worker_db import worker_db
+# Import unified database service and auth
+from config.db_service import db_service
 from config.face_embedding import get_face_embedding
+from config.auth import AuthManager
+from config.mongodb import initialize_mongodb
 
 # =========================================================
 # CONFIGURATION
@@ -154,21 +156,35 @@ async def restart_recognition_worker():
             "message": f"AI worker not reachable: {str(e)}"
         }
 
+@app.post("/api/auth/login")
+async def login(data: dict):
+    """Admin login endpoint"""
+    username = data.get("username")
+    password = data.get("password")
+    
+    user = db_service.db.users.find_one({"username": username})
+    if user and AuthManager.verify_password(password, user["password"]):
+        token = AuthManager.create_access_token({"sub": username, "role": user.get("role", "admin")})
+        return {
+            "success": True,
+            "token": token,
+            "user": {
+                "username": username,
+                "role": user.get("role", "admin")
+            }
+        }
+    
+    raise HTTPException(status_code=401, detail="Invalid username or password")
+
 # =========================================================
 # ROUTES - DASHBOARD DATA
 # =========================================================
 @app.get("/dashboard/stats")
 async def get_dashboard_stats():
-    """Get dashboard statistics"""
+    """Get real dashboard statistics from MongoDB"""
     try:
-        return {
-            "total_violations": 0,
-            "total_alerts": 0,
-            "active_cameras": 1,
-            "detection_status": "active",
-            "uptime_seconds": int(time.time()),
-            "last_detection": last_detection or {}
-        }
+        stats = db_service.get_dashboard_stats()
+        return stats
     except Exception as e:
         return {"error": str(e)}
 
@@ -340,7 +356,7 @@ async def test_camera_connection(url: str) -> str:
 async def get_attendance_today():
     """Get today's attendance records"""
     try:
-        records = worker_db.get_today_attendance()
+        records = db_service.get_today_attendance()
         return {
             "date": datetime.now().strftime("%Y-%m-%d"),
             "records": records,
@@ -351,9 +367,9 @@ async def get_attendance_today():
 
 @app.get("/api/attendance/employees")
 async def get_attendance_employees():
-    """Get all enrolled workers"""
+    """Get all enrolled workers from MongoDB"""
     try:
-        employees = worker_db.get_all_workers()
+        employees = db_service.get_all_workers()
         return {
             "employees": employees,
             "total": len(employees)
@@ -365,15 +381,15 @@ async def get_attendance_employees():
 async def delete_employee(worker_id: str):
     """Delete a worker and all associated data"""
     try:
-        if not worker_db.worker_exists(worker_id):
+        if not db_service.worker_exists(worker_id):
             return JSONResponse(status_code=404, content={"success": False, "error": "Worker not found"})
         
-        success = worker_db.delete_worker(worker_id)
+        success = db_service.delete_worker(worker_id)
         
         if success:
             # Reload embeddings cache
             global worker_embeddings
-            worker_embeddings = load_worker_embeddings()
+            worker_embeddings = db_service.get_all_embeddings()
             
             return {"success": True, "message": f"Worker {worker_id} deleted successfully"}
         else:
@@ -431,13 +447,13 @@ async def enroll_employee(
             )
         
         # Add worker to database
-        if not worker_db.add_worker(worker_id, name.strip(), email, phone):
+        if not db_service.add_worker(worker_id, name.strip(), email, phone):
             if os.path.exists(saved_path):
                 os.remove(saved_path)
             return JSONResponse(status_code=500, content={"success": False, "error": "Failed to save worker profile"})
         
         # Store face embedding
-        if not worker_db.store_embedding(worker_id, embedding):
+        if not db_service.store_embedding(worker_id, embedding):
             return JSONResponse(status_code=500, content={"success": False, "error": "Failed to store face embedding"})
         
         # Reload embeddings in memory
@@ -456,9 +472,21 @@ async def enroll_employee(
 
 @app.get("/api/attendance/{employee_id}")
 async def get_employee_attendance(employee_id: str):
-    """Get attendance history for a specific worker (last 30 days)"""
+    """Get attendance history for a specific worker from MongoDB"""
     try:
-        records = worker_db.get_worker_attendance(employee_id, days=30)
+        # Implementation in db_service would be similar
+        # For now, let's keep it simple or implement in db_service
+        pipeline = [
+            {"$match": {"worker_id": employee_id}},
+            {"$sort": {"date": -1}},
+            {"$limit": 30}
+        ]
+        records = list(db_service.db.attendance_logs.aggregate(pipeline))
+        for r in records:
+            r["_id"] = str(r["_id"])
+            if r.get("check_in_time"): r["check_in"] = r["check_in_time"].isoformat()
+            if r.get("check_out_time"): r["check_out"] = r["check_out_time"].isoformat()
+            
         return {
             "employee_id": employee_id,
             "records": records,
@@ -480,10 +508,10 @@ async def mark_attendance(data: dict):
         if event_type not in {"check_in", "check_out"}:
             return JSONResponse(status_code=400, content={"success": False, "error": "event_type must be check_in or check_out"})
 
-        if not worker_db.worker_exists(worker_id):
+        if not db_service.worker_exists(worker_id):
             return JSONResponse(status_code=404, content={"success": False, "error": f"Worker not found: {worker_id}"})
 
-        success = worker_db.mark_attendance(worker_id, event_type=event_type, detected_by="manual")
+        success = db_service.mark_attendance(worker_id, event_type=event_type, detected_by="manual")
         if not success:
             return JSONResponse(
                 status_code=409,
@@ -503,9 +531,9 @@ async def mark_attendance(data: dict):
 # =========================================================
 @app.get("/workers")
 async def get_workers():
-    """Get all active workers"""
+    """Get all active workers from MongoDB"""
     try:
-        workers = worker_db.get_all_workers()
+        workers = db_service.get_all_workers()
         return {
             "workers": workers,
             "total": len(workers)
@@ -522,7 +550,7 @@ async def create_worker(data: dict):
         email = data.get("email")
         phone = data.get("phone")
         
-        worker_db.add_worker(worker_id, name, email, phone)
+        db_service.add_worker(worker_id, name, email, phone)
         
         return {
             "success": True,
@@ -536,17 +564,33 @@ async def create_worker(data: dict):
 async def startup_event():
     """Startup initialization"""
     print("=" * 60)
-    print("Starting AI Construction Safety System Backend - API Only")
+    print("Starting AI Construction Safety System Backend - PRODUCTION READY")
     print("=" * 60)
 
+    # Initialize MongoDB
+    initialize_mongodb()
+    
     os.makedirs(ENROLLMENT_DIR, exist_ok=True)
     
-    # Load worker embeddings
-    load_worker_embeddings()
+    # Load worker embeddings into memory
+    global worker_embeddings
+    worker_embeddings = db_service.get_all_embeddings()
+    print(f"✅ Loaded {len(worker_embeddings)} worker embeddings from MongoDB")
     
+    # Create default admin if not exists
+    admin_exists = db_service.db.users.find_one({"username": "admin"})
+    if not admin_exists:
+        hashed_pw = AuthManager.hash_password("admin123")
+        db_service.db.users.insert_one({
+            "username": "admin",
+            "password": hashed_pw,
+            "role": "admin",
+            "created_at": datetime.utcnow()
+        })
+        print("✅ Default admin user created (admin / admin123)")
+
     print(f"✅ Backend started on http://{APP_HOST}:{APP_PORT}")
     print(f"✅ MediaMTX WebRTC: {MEDIAMTX_WEBRTC_URL}")
-    print(f"✅ MediaMTX HLS: {MEDIAMTX_HLS_URL}")
     print(f"✅ AI Worker: {AI_WORKER_URL}")
     print("=" * 60)
 

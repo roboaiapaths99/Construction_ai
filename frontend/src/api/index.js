@@ -14,6 +14,10 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
     return config;
   },
@@ -50,6 +54,9 @@ export const apiEndpoints = {
   getAlerts: () => api.get('/alerts'),
   getCameras: () => api.get('/cameras'),
   getDashboardStats: () => api.get('/dashboard/stats'),
+  
+  // Auth
+  login: (credentials) => api.post('/api/auth/login', credentials),
 };
 
 export default api;

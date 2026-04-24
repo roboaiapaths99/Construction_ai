@@ -1,52 +1,97 @@
 version: "3.9"
 
 services:
+  # Main API Backend
+  backend:
+    build: ./backend
+    container_name: ai-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGODB_URL=${MONGODB_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554/sitecam
+      - AI_WORKER_URL=http://ai-worker:8001
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+    networks:
+      - construction-network
+
+  # Frontend Web App
+  frontend:
+    build: ./frontend
+    container_name: ai-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - construction-network
+
+  # PPE Detection Worker
+  ai-worker:
+    build: ./backend
+    container_name: ai-worker
+    command: ["python", "ai_worker.py"]
+    environment:
+      - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554/sitecam
+      - MONGODB_URL=${MONGODB_URL}
+    depends_on:
+      - backend
+      - mediamtx
+    restart: unless-stopped
+    networks:
+      - construction-network
+
+  # Face Recognition Worker
+  recognition-worker:
+    build: ./backend
+    container_name: recognition-worker
+    command: ["python", "workers/recognition_worker.py"]
+    environment:
+      - MEDIAMTX_RTSP_URL=rtsp://mediamtx:8554/sitecam
+      - MONGODB_URL=${MONGODB_URL}
+    depends_on:
+      - backend
+      - mediamtx
+    restart: unless-stopped
+    networks:
+      - construction-network
+
+  # MediaMTX Streaming Server
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    ports:
+      - "8554:8554" # RTSP
+      - "8888:8888" # HLS
+      - "8889:8889" # WebRTC
+    restart: unless-stopped
+    networks:
+      - construction-network
+
+  # FFmpeg Bridge (External RTSP to MediaMTX)
   ffmpeg-bridge:
     image: jrottenberg/ffmpeg:latest
     container_name: ffmpeg-bridge
-    entrypoint: ffmpeg
     command: 
       - -rtsp_transport
       - tcp
       - -i
-      - rtsp://192.168.1.36:554/11
+      - ${SOURCE_RTSP_URL}
       - -c:v
-      - libx264
-      - -preset
-      - ultrafast
-      - -tune
-      - zerolatency
-      - -an
+      - copy
       - -f
       - rtsp
-      - -rtsp_transport
-      - tcp
       - rtsp://mediamtx:8554/sitecam
     depends_on:
       - mediamtx
     restart: unless-stopped
     networks:
-      - mediamtx-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  mediamtx:
-    image: bluenviron/mediamtx:latest
-    container_name: mediamtx
-    ports:
-      - "8888:8888"
-      - "8554:8554"
-      - "8890:8890"
-    volumes:
-      - ./mediamtx.yml:/mediamtx.yml
-    command: /mediamtx.yml
-    networks:
-      - mediamtx-network
-    restart: unless-stopped
+      - construction-network
 
 networks:
-  mediamtx-network:
+  construction-network:
     driver: bridge
