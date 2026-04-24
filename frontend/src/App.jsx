@@ -8,7 +8,6 @@ import Attendance from './pages/Attendance';
 import Alerts from './pages/Alerts';
 import Cameras from './pages/Cameras';
 import Settings from './pages/Settings';
-import Login from './pages/Login';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './context/ToastContext';
 import { AppProvider } from './context/AppContext';
@@ -19,25 +18,18 @@ function App() {
       <AppProvider>
         <ToastProvider>
           <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="*" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/violations" element={<Violations />} />
-                      <Route path="/workers" element={<Workers />} />
-                      <Route path="/attendance" element={<Attendance />} />
-                      <Route path="/alerts" element={<Alerts />} />
-                      <Route path="/cameras" element={<Cameras />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Layout>
-                </ProtectedRoute>
-              } />
-            </Routes>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/violations" element={<Violations />} />
+                <Route path="/workers" element={<Workers />} />
+                <Route path="/attendance" element={<Attendance />} />
+                <Route path="/alerts" element={<Alerts />} />
+                <Route path="/cameras" element={<Cameras />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
           </Router>
         </ToastProvider>
       </AppProvider>
@@ -56,13 +48,5 @@ const NotFound = () => (
     </div>
   </div>
 );
-
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('auth_token');
-  if (!token) {
-    return <Login />;
-  }
-  return children;
-};
 
 export default App;
