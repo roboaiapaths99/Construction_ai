@@ -10,7 +10,7 @@ export default function RecognitionWorkerStatus() {
   const fetchWorkerStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8080/api/recognition/stats');
+      const response = await fetch('/api/recognition/stats');
       if (!response.ok) throw new Error('Failed to fetch worker stats');
       const data = await response.json();
       setWorkerStats(data);
@@ -26,7 +26,7 @@ export default function RecognitionWorkerStatus() {
   const restartWorker = async () => {
     try {
       setIsRestarting(true);
-      const response = await fetch('http://localhost:8080/api/recognition/restart', {
+      const response = await fetch('/api/recognition/restart', {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to restart worker');

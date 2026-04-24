@@ -27,7 +27,7 @@ const Workers = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8080/api/attendance/employees/${workerId}`, {
+      const response = await fetch(`/api/attendance/employees/${workerId}`, {
         method: 'DELETE',
       });
 

@@ -11,7 +11,7 @@ const MEDIAMTX_WEBRTC_URL = process.env.REACT_APP_MEDIAMTX_WEBRTC || 'http://loc
 const MEDIAMTX_HLS_URL = process.env.REACT_APP_MEDIAMTX_HLS || 'http://localhost:8888/sitecam/index.m3u8';
 const MEDIAMTX_RTSP_URL = process.env.REACT_APP_MEDIAMTX_RTSP || 'rtsp://localhost:8554/sitecam';
 // Backend MJPEG stream (direct camera feed)
-const BACKEND_STREAM_URL = process.env.REACT_APP_BACKEND_STREAM || 'http://localhost:8080/stream';
+const BACKEND_STREAM_URL = process.env.REACT_APP_BACKEND_STREAM || '/stream';
 
 export const config = {
   api: {
