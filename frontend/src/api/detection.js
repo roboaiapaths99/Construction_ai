@@ -1,5 +1,7 @@
 // Centralized API service for AI detection
-const API_BASE_URL = 'http://localhost:8001';
+import config from '../config';
+
+const API_BASE_URL = config.api.baseURL;
 
 export async function detectObjects(imageBase64) {
   try {

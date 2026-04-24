@@ -4,6 +4,7 @@ import { apiEndpoints } from '../api';
 import StatCard from '../components/StatCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlertBanner from '../components/AlertBanner';
+import RecognitionWorkerStatus from '../components/RecognitionWorkerStatus';
 import { 
   Users, 
   AlertTriangle, 
@@ -54,13 +55,13 @@ const Dashboard = () => {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Real-time construction site safety monitoring</p>
+        <p className="text-gray-600 mt-2">Real-time hospital safety monitoring</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          title="Total Workers"
+          title="Total Employee"
           value={stats?.total_workers || 0}
           icon={Users}
           color="blue"
@@ -147,6 +148,11 @@ const Dashboard = () => {
             <p className="text-gray-500 text-center py-4">No active alerts</p>
           )}
         </div>
+      </div>
+
+      {/* Recognition Worker Status */}
+      <div className="mt-6">
+        <RecognitionWorkerStatus />
       </div>
 
       {/* System Status */}

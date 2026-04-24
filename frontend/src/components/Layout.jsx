@@ -8,7 +8,8 @@ import {
   Camera, 
   Settings,
   Menu,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -18,7 +19,8 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Violations', href: '/violations', icon: AlertTriangle },
-    { name: 'Workers', href: '/workers', icon: Users },
+    { name: 'Employee', href: '/workers', icon: Users },
+    { name: 'Attendance', href: '/attendance', icon: Clock },
     { name: 'Alerts', href: '/alerts', icon: Bell },
     { name: 'Cameras', href: '/cameras', icon: Camera },
     { name: 'Settings', href: '/settings', icon: Settings },
@@ -62,7 +64,7 @@ const Layout = ({ children }) => {
               >
                 <Menu className="h-6 w-6" />
               </button>
-              <h1 className="ml-3 text-xl font-semibold text-white">Construction AI</h1>
+              <h1 className="ml-3 text-xl font-semibold text-white">Hospital Dashboard</h1>
             </div>
           </div>
         </div>
@@ -76,7 +78,7 @@ const Sidebar = ({ navigation, isActive }) => (
   <div className="flex-1 flex flex-col min-h-0 bg-gray-900">
     <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
       <div className="flex items-center flex-shrink-0 px-4">
-        <h1 className="text-2xl font-bold text-white">Construction AI</h1>
+        <h1 className="text-2xl font-bold text-white">Hospital Dashboard</h1>
       </div>
       <nav className="mt-5 flex-1 px-2 space-y-1">
         {navigation.map((item) => {

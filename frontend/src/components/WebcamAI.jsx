@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Camera, CameraOff, Video, VideoOff, Download, AlertTriangle, User, Shield, Activity, Zap } from 'lucide-react';
+import config from '../config';
 
 const WebcamAI = ({ 
   onDetection, 
@@ -8,6 +9,7 @@ const WebcamAI = ({
   className = '',
   showControls = true 
 }) => {
+  const API_BASE_URL = config.api.baseURL;
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const detectionCanvasRef = useRef(null);
@@ -39,14 +41,14 @@ const WebcamAI = ({
   // Monitor when streaming starts and automatically start AI detection
   useEffect(() => {
     if (isStreaming && enableAI && !detectionIntervalRef.current) {
-      console.log('?? Streaming started, initiating AI detection...');
+      console.log('Streaming started, initiating AI detection...');
       setTimeout(() => {
         // Start detection directly without calling startAIDetection to avoid circular dependency
         if (detectionIntervalRef.current) {
           clearInterval(detectionIntervalRef.current);
         }
         
-        console.log('?? Starting AI detection loop...');
+        console.log('Starting AI detection loop...');
         performAIDetection();
         
         detectionIntervalRef.current = setInterval(() => {
@@ -94,7 +96,7 @@ const WebcamAI = ({
         audio: enableRecording
       };
 
-      console.log('?? Requesting camera access...');
+      console.log('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       
@@ -104,12 +106,12 @@ const WebcamAI = ({
         // Wait for video to be ready
         videoRef.current.onloadedmetadata = async () => {
           try {
-            console.log('?? Video metadata loaded, starting stream...');
+            console.log('Video metadata loaded, starting stream...');
             await videoRef.current.play();
             setIsStreaming(true);
             setPermissionGranted(true);
             
-            console.log('?? Stream started successfully, isStreaming:', true);
+            console.log('Stream started successfully, isStreaming:', true);
             
             // Calculate FPS
             let lastTime = performance.now();
@@ -128,9 +130,9 @@ const WebcamAI = ({
             
             requestAnimationFrame(calculateFPS);
 
-            console.log('?? AI detection will start automatically when streaming is ready');
+            console.log('AI detection will start automatically when streaming is ready');
           } catch (error) {
-            console.error('?? Error playing video:', error);
+            console.error('Error playing video:', error);
             setError('Failed to start video stream');
           }
         };
@@ -138,19 +140,19 @@ const WebcamAI = ({
         // Also handle oncanplay as backup
         videoRef.current.oncanplay = () => {
           if (!isStreaming) {
-            console.log('?? Video can play, setting streaming true');
+            console.log('Video can play, setting streaming true');
             setIsStreaming(true);
           }
         };
 
         // Handle errors
         videoRef.current.onerror = (error) => {
-          console.error('?? Video error:', error);
+          console.error('Video error:', error);
           setError('Video stream error occurred');
         };
       }
     } catch (err) {
-      console.error('?? Webcam error:', err);
+      console.error('Webcam error:', err);
       
       if (err.name === 'NotAllowedError') {
         setError('Camera permission denied. Please enable camera permissions in your browser.');
@@ -204,16 +206,16 @@ const WebcamAI = ({
       enableAI: enableAI
     };
     
-    console.log('?? Detection check - conditions:', debugInfo);
+    console.log('Detection check - conditions:', debugInfo);
     
     if (!videoRef.current || !canvasRef.current || !isStreaming || isProcessing) {
-      console.log('?? Skipping detection - conditions not met:', debugInfo);
+      console.log('Skipping detection - conditions not met:', debugInfo);
       return;
     }
     
     // Additional video readiness check
     if (videoRef.current.readyState < 2) {
-      console.log('?? Video not ready yet, readyState:', videoRef.current.readyState);
+      console.log('Video not ready yet, readyState:', videoRef.current.readyState);
       return;
     }
 
@@ -221,7 +223,7 @@ const WebcamAI = ({
     setIsProcessing(true);
     
     try {
-      console.log('🔍 Starting AI detection cycle...');
+      console.log('Starting AI detection cycle...');
       
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -229,7 +231,7 @@ const WebcamAI = ({
 
       // Verify video is ready
       if (video.videoWidth === 0 || video.videoHeight === 0) {
-        console.warn('⚠️ Video not ready yet, skipping this frame');
+        console.warn('Video not ready yet, skipping this frame');
         return;
       }
 
@@ -242,11 +244,11 @@ const WebcamAI = ({
 
       // Convert to base64
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
-      console.log(`📷 Frame captured: ${canvas.width}x${canvas.height}, data length: ${imageData.length}`);
+      console.log(`Frame captured: ${canvas.width}x${canvas.height}, data length: ${imageData.length}`);
       
       // Call backend AI detection API
       const apiStartTime = performance.now();
-      const response = await fetch('http://localhost:8002/detect_base64', {
+      const response = await fetch(`${API_BASE_URL}/detect_base64`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -257,14 +259,14 @@ const WebcamAI = ({
       });
       
       const apiTime = performance.now() - apiStartTime;
-      console.log(`🌐 API call completed in ${apiTime.toFixed(2)}ms, status: ${response.status}`);
+      console.log(`API call completed in ${apiTime.toFixed(2)}ms, status: ${response.status}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('📊 API Response:', result);
+      console.log('API Response:', result);
       
       // Update debug info
       setDebugInfo(prev => ({
@@ -276,14 +278,14 @@ const WebcamAI = ({
       }));
       
       if (result.success && result.detections) {
-        console.log(`✅ Successful detection: ${result.detections.length} objects, ${result.violations?.length || 0} violations`);
+        console.log(`Successful detection: ${result.detections.length} objects, ${result.violations?.length || 0} violations`);
         
         // Process detections with proper validation
         const processedDetections = result.detections.map((detection, index) => {
           // Validate bounding box
           const bbox = detection.bbox || {};
           if (!bbox.x || !bbox.y || !bbox.width || !bbox.height) {
-            console.warn(`⚠️ Invalid bbox for detection ${index}:`, bbox);
+            console.warn(`Invalid bbox for detection ${index}:`, bbox);
             return null;
           }
           
@@ -316,7 +318,7 @@ const WebcamAI = ({
           }));
           
           setViolations(processedViolations);
-          console.log(`🚨 Violations detected: ${processedViolations.length}`);
+          console.log(`Violations detected: ${processedViolations.length}`);
         } else {
           setViolations([]);
         }
@@ -341,27 +343,27 @@ const WebcamAI = ({
           });
         }
       } else if (result.error) {
-        console.warn('⚠️ AI Detection Error:', result.error);
+        console.warn('AI Detection Error:', result.error);
         setDebugInfo(prev => ({ ...prev, errors: prev.errors + 1 }));
         // Continue with mock detection on error
         performMockDetection();
       }
 
     } catch (error) {
-      console.error('❌ AI Detection failed:', error);
+      console.error('AI Detection failed:', error);
       setDebugInfo(prev => ({ ...prev, errors: prev.errors + 1 }));
       // Fallback to mock detection
       performMockDetection();
     } finally {
       const totalTime = performance.now() - startTime;
       setIsProcessing(false);
-      console.log(`⏱️ Detection cycle completed in ${totalTime.toFixed(2)}ms`);
+      console.log(`Detection cycle completed in ${totalTime.toFixed(2)}ms`);
     }
   }, [isStreaming, isProcessing, onDetection]);
 
   // Enhanced mock detection as fallback
   const performMockDetection = useCallback(() => {
-    console.log('🤖 Using mock detection fallback');
+    console.log('Using mock detection fallback');
     
     const mockDetections = [
       {
@@ -424,7 +426,7 @@ const WebcamAI = ({
   // Enhanced detection box drawing
   const drawDetectionBoxes = useCallback((detectionList, violationList) => {
     if (!detectionCanvasRef.current || !videoRef.current) {
-      console.warn('⚠️ Cannot draw boxes - canvas or video not ready');
+      console.warn('Cannot draw boxes - canvas or video not ready');
       return;
     }
 
@@ -439,14 +441,14 @@ const WebcamAI = ({
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    console.log(`🎨 Drawing ${detectionList.length} detection boxes and ${violationList.length} violation boxes`);
+    console.log(`Drawing ${detectionList.length} detection boxes and ${violationList.length} violation boxes`);
 
     // Draw detection boxes
     detectionList.forEach((detection, index) => {
       const { bbox, color, label, confidence } = detection;
       
       if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
-        console.warn(`⚠️ Skipping invalid detection box ${index}:`, bbox);
+        console.warn(`Skipping invalid detection box ${index}:`, bbox);
         return;
       }
       
@@ -467,9 +469,9 @@ const WebcamAI = ({
         ctx.font = 'bold 12px Arial';
         ctx.fillText(label, bbox.x + 5, bbox.y - 5);
         
-        console.log(`✅ Drew detection box: ${detection.class} at (${bbox.x}, ${bbox.y})`);
+        console.log(`Drew detection box: ${detection.class} at (${bbox.x}, ${bbox.y})`);
       } catch (error) {
-        console.error(`❌ Error drawing detection box ${index}:`, error);
+        console.error(`Error drawing detection box ${index}:`, error);
       }
     });
 
@@ -478,7 +480,7 @@ const WebcamAI = ({
       const { bbox, severity, message } = violation;
       
       if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
-        console.warn(`⚠️ Skipping invalid violation box ${index}:`, bbox);
+        console.warn(`Skipping invalid violation box ${index}:`, bbox);
         return;
       }
       
@@ -498,13 +500,13 @@ const WebcamAI = ({
         // Draw violation alert text
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 12px Arial';
-        ctx.fillText('⚠ VIOLATION', bbox.x + 5, bbox.y - 20);
+        ctx.fillText('VIOLATION', bbox.x + 5, bbox.y - 20);
         ctx.font = '10px Arial';
         ctx.fillText(message, bbox.x + 5, bbox.y - 8);
         
-        console.log(`🚨 Drew violation box: ${violation.type} at (${bbox.x}, ${bbox.y})`);
+        console.log(`Drew violation box: ${violation.type} at (${bbox.x}, ${bbox.y})`);
       } catch (error) {
-        console.error(`❌ Error drawing violation box ${index}:`, error);
+        console.error(`Error drawing violation box ${index}:`, error);
       }
     });
   }, []);
@@ -515,7 +517,7 @@ const WebcamAI = ({
       clearInterval(detectionIntervalRef.current);
     }
 
-    console.log('?? Starting AI detection loop...');
+    console.log('Starting AI detection loop...');
     
     // Initial detection
     performAIDetection();
@@ -559,7 +561,7 @@ const WebcamAI = ({
     let instructions = '';
     
     if (isChrome) {
-      instructions = 'Click the camera icon 📷 in the address bar and select "Allow"';
+      instructions = 'Click the camera icon in the address bar and select "Allow"';
     } else if (isFirefox) {
       instructions = 'Click "Remember this decision" when prompted for camera access';
     } else if (isSafari) {

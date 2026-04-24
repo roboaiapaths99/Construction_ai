@@ -3,14 +3,25 @@ import cv2
 import csv
 import time
 import requests
+import torch
 from datetime import datetime
 from collections import defaultdict
 from ultralytics import YOLO
 
+# Patch torch.load for PyTorch 2.6 compatibility
+original_torch_load = torch.load
+
+def patched_torch_load(*args, **kwargs):
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return original_torch_load(*args, **kwargs)
+
+torch.load = patched_torch_load
+
 # =========================================================
 # CONFIG
 # =========================================================
-PPE_MODEL_PATH = "models/safety_best.pt"
+PPE_MODEL_PATH = "ai/models/yolov8n.pt"
 
 # Video source
 SOURCE = 0

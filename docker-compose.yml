@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  ffmpeg-bridge:
+    image: jrottenberg/ffmpeg:latest
+    container_name: ffmpeg-bridge
+    entrypoint: ffmpeg
+    command: 
+      - -rtsp_transport
+      - tcp
+      - -i
+      - rtsp://192.168.1.36:554/11
+      - -c:v
+      - libx264
+      - -preset
+      - ultrafast
+      - -tune
+      - zerolatency
+      - -an
+      - -f
+      - rtsp
+      - -rtsp_transport
+      - tcp
+      - rtsp://mediamtx:8554/sitecam
+    depends_on:
+      - mediamtx
+    restart: unless-stopped
+    networks:
+      - mediamtx-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    ports:
+      - "8888:8888"
+      - "8554:8554"
+      - "8890:8890"
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+    command: /mediamtx.yml
+    networks:
+      - mediamtx-network
+    restart: unless-stopped
+
+networks:
+  mediamtx-network:
+    driver: bridge

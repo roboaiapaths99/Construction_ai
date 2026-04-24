@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Violations from './pages/Violations';
 import Workers from './pages/Workers';
+import Attendance from './pages/Attendance';
 import Alerts from './pages/Alerts';
 import Cameras from './pages/Cameras';
 import Settings from './pages/Settings';
@@ -22,6 +23,7 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/violations" element={<Violations />} />
                 <Route path="/workers" element={<Workers />} />
+                <Route path="/attendance" element={<Attendance />} />
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/cameras" element={<Cameras />} />
                 <Route path="/settings" element={<Settings />} />

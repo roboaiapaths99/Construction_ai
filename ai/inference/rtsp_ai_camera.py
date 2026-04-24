@@ -11,7 +11,7 @@ import json
 # =========================================================
 
 # Camera Configuration
-RTSP_URL = "rtsp://192.168.1.71:554/11?tcp"  # Your working URL with TCP protocol
+RTSP_URL = "rtsp://192.168.1.36?tcp"  # Your working URL with TCP protocol
 BUFFER_SIZE = 1  # IMPORTANT: Reduces lag
 TCP_PROTO = "tcp"  # IMPORTANT: More stable connection
 
@@ -21,7 +21,7 @@ CONFIDENCE_THRESHOLD = 0.4
 DISPLAY_SIZE = (640, 480)  # IMPORTANT: Resize for performance
 
 # API Configuration
-BACKEND_URL = "http://localhost:8001/detect_base64"
+BACKEND_URL = "http://localhost:8000/detect_base64"
 
 class RTSPAICamera:
     def __init__(self):

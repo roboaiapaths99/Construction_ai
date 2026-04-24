@@ -1,10 +1,17 @@
 // Environment Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT || '10000');
 const LOG_LEVEL = process.env.REACT_APP_LOG_LEVEL || 'info';
 const ENABLE_DEBUG = process.env.REACT_APP_DEBUG === 'true' || false;
 const APP_VERSION = process.env.REACT_APP_VERSION || '1.0.0';
 const APP_ENV = process.env.NODE_ENV || 'development';
+
+// MediaMTX Configuration
+const MEDIAMTX_WEBRTC_URL = process.env.REACT_APP_MEDIAMTX_WEBRTC || 'http://localhost:8889/sitecam';
+const MEDIAMTX_HLS_URL = process.env.REACT_APP_MEDIAMTX_HLS || 'http://localhost:8888/sitecam/index.m3u8';
+const MEDIAMTX_RTSP_URL = process.env.REACT_APP_MEDIAMTX_RTSP || 'rtsp://localhost:8554/sitecam';
+// Backend MJPEG stream (direct camera feed)
+const BACKEND_STREAM_URL = process.env.REACT_APP_BACKEND_STREAM || 'http://localhost:8080/stream';
 
 export const config = {
   api: {
@@ -12,6 +19,8 @@ export const config = {
     timeout: API_TIMEOUT,
     retries: 3,
     retryDelay: 1000,
+    isDevelopment: APP_ENV === 'development',
+    isProduction: APP_ENV === 'production',
   },
   logging: {
     level: LOG_LEVEL,
@@ -22,6 +31,14 @@ export const config = {
     environment: APP_ENV,
     isDevelopment: APP_ENV === 'development',
     isProduction: APP_ENV === 'production',
+  },
+  media: {
+    webrtc: MEDIAMTX_WEBRTC_URL,
+    hls: MEDIAMTX_HLS_URL,
+    rtsp: MEDIAMTX_RTSP_URL,
+    mjpeg: BACKEND_STREAM_URL,
+    // Use HLS as primary (from MediaMTX)
+    primary: 'hls',
   },
   ui: {
     messageTimeout: 5000,

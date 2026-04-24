@@ -11,14 +11,36 @@ import {
   CheckCircle,
   User,
   MapPin,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 
 const Workers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   
-  const { data: workers, loading, error } = usePollingStable(apiEndpoints.getWorkers, 10000);
+  const { data: workers, loading, error, refetch } = usePollingStable(apiEndpoints.getWorkers, 10000);
+
+  const handleDeleteWorker = async (workerId) => {
+    if (!window.confirm('Are you sure you want to delete this worker? This will also delete all their face profiles and attendance records.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/attendance/employees/${workerId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        refetch();
+      } else {
+        alert('Failed to delete worker');
+      }
+    } catch (error) {
+      console.error('Error deleting worker:', error);
+      alert('Error deleting worker');
+    }
+  };
 
   const filteredWorkers = workers?.workers?.filter(worker => {
     const matchesSearch = (worker.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -73,8 +95,8 @@ const Workers = () => {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Workers</h1>
-        <p className="text-gray-600 mt-2">Monitor worker safety and status</p>
+        <h1 className="text-3xl font-bold text-gray-900">Employee</h1>
+        <p className="text-gray-600 mt-2">Monitor employee safety and status</p>
       </div>
 
       {/* Stats Cards */}
@@ -82,7 +104,7 @@ const Workers = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Workers</p>
+              <p className="text-sm font-medium text-gray-600">Total Employee</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">{filteredWorkers.length}</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg">
@@ -117,7 +139,7 @@ const Workers = () => {
       {error && (
         <AlertBanner 
           type="error" 
-          message="Failed to load worker data. Please try again." 
+          message="Failed to load employee data. Please try again." 
         />
       )}
 
@@ -129,7 +151,7 @@ const Workers = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search workers..."
+                placeholder="Search employee..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -154,7 +176,7 @@ const Workers = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredWorkers.length > 0 ? (
           filteredWorkers.map((worker) => (
-            <div key={worker.id} className="card hover:shadow-md transition-shadow duration-200">
+            <div key={worker.worker_id} className="card hover:shadow-md transition-shadow duration-200">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-gray-100 rounded-lg">
@@ -195,11 +217,20 @@ const Workers = () => {
                     {getStatusIcon(worker.status)}
                     <span className="ml-1">{worker.status}</span>
                   </span>
-                  {worker.status === 'At Risk' && (
-                    <button className="text-sm text-primary-600 hover:text-primary-800 font-medium">
-                      View Details
+                  <div className="flex items-center gap-2">
+                    {worker.status === 'At Risk' && (
+                      <button className="text-sm text-primary-600 hover:text-primary-800 font-medium">
+                        View Details
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteWorker(worker.worker_id)}
+                      className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -208,7 +239,7 @@ const Workers = () => {
           <div className="col-span-full">
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No workers found</p>
+              <p className="text-gray-500">No employee found</p>
             </div>
           </div>
         )}

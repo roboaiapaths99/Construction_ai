@@ -26,7 +26,40 @@ const Settings = () => {
       apiUrl: config.api.baseURL,
       environment: config.app.environment,
     },
+    camera: {
+      source: 'custom', // Default to IP Camera
+      customUrl: 'rtsp://192.168.1.16:554/11', // Store custom IP camera URL separately
+    },
   });
+
+  const [cameraConfig, setCameraConfig] = useState({
+    camera_source: '0',
+    camera_type: 'webcam',
+    camera_status: 'disconnected',
+  });
+
+  const fetchCameraConfig = async () => {
+    try {
+      const response = await fetch(`${config.api.baseURL}/api/camera/config`);
+      if (response.ok) {
+        const data = await response.json();
+        setCameraConfig(data);
+        setSettings(prev => ({
+          ...prev,
+          camera: { 
+            source: data.camera_source,
+            customUrl: data.custom_url || ''
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch camera config:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCameraConfig();
+  }, []);
 
   const handleSettingChange = (category, setting, value) => {
     setSettings(prev => ({
@@ -53,12 +86,43 @@ const Settings = () => {
       appState.updateRefreshInterval(settings.dashboard.refreshInterval * 1000);
       appState.updateTheme(settings.system.theme);
 
+      // Save camera configuration
+      await saveCameraConfig();
+
       toast.success('Settings saved successfully');
     } catch (error) {
       toast.error('Failed to save settings');
       console.error(error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveCameraConfig = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('source', settings.camera.source);
+      
+      // If custom IP camera, append the URL
+      if (settings.camera.source === 'custom') {
+        formData.append('custom_url', settings.camera.customUrl);
+      }
+      
+      const response = await fetch(`${config.api.baseURL}/api/camera/configure`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCameraConfig(data);
+        toast.success('Camera configuration saved');
+      } else {
+        toast.error('Failed to save camera configuration');
+      }
+    } catch (error) {
+      console.error('Failed to save camera config:', error);
+      toast.error('Failed to save camera configuration');
     }
   };
 
@@ -79,6 +143,10 @@ const Settings = () => {
         appVersion: config.app.version,
         apiUrl: config.api.baseURL,
         environment: config.app.environment,
+      },
+      camera: {
+        source: 'custom',
+        customUrl: 'rtsp://192.168.1.16:554/11',
       },
     });
     toast.info('Settings reset to defaults');
@@ -184,6 +252,67 @@ const Settings = () => {
                 checked={settings.notifications.highPriorityOnly}
                 onChange={(value) => handleSettingChange('notifications', 'highPriorityOnly', value)}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Camera Settings */}
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">📷 Camera Configuration</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Camera Type</label>
+              <select
+                value={settings.camera.source}
+                onChange={(e) => handleSettingChange('camera', 'source', e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="0">Webcam (Default)</option>
+                <option value="1">Webcam (Secondary)</option>
+                <option value="custom">IP Camera (RTSP/HTTP)</option>
+              </select>
+            </div>
+
+            {settings.camera.source === 'custom' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">IP Camera URL</label>
+                <input
+                  type="text"
+                  placeholder="rtsp://username:password@192.168.1.100:554/stream"
+                  value={settings.camera.customUrl}
+                  onChange={(e) => handleSettingChange('camera', 'customUrl', e.target.value)}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Enter RTSP or HTTP stream URL for IP camera. Examples:<br/>
+                  • <code className="bg-gray-100 px-1 rounded">rtsp://192.168.1.100:554/stream</code><br/>
+                  • <code className="bg-gray-100 px-1 rounded">rtsp://user:pass@192.168.1.100:554/main</code><br/>
+                  • <code className="bg-gray-100 px-1 rounded">http://192.168.1.100:8080/stream</code>
+                </p>
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    💡 <strong>Tip:</strong> After entering the URL, scroll to the top and click the <strong>Save</strong> button to test and apply the connection.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-gray-900">Current Status</label>
+                  <p className="text-sm text-gray-500">
+                    Type: {cameraConfig.camera_type} | Status: {cameraConfig.camera_status}
+                  </p>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  cameraConfig.camera_status === 'connected' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {cameraConfig.camera_status}
+                </div>
+              </div>
             </div>
           </div>
         </div>

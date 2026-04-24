@@ -1,0 +1,1 @@
+event_id,timestamp,camera_name,camera_ip,camera_source,total_persons,total_violations,violation_type,violation_details,image_path,status

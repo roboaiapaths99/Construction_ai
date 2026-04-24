@@ -1,287 +1,82 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import mysql.connector
-from mysql.connector import Error
+#!/usr/bin/env python3
+"""
+AI Construction Safety System Backend - API Only
+- Handles REST APIs for attendance, employees, incidents
+- No direct camera access (handled by MediaMTX + AI Worker)
+- Database operations and business logic
+"""
+
 import os
-import base64
-import io
 import time
+from datetime import datetime
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-import numpy as np
-import torch
+import io
+import uuid
 
-# Lazy import for YOLO to handle NumPy compatibility issues
-YOLO = None
-
-# Import configuration modules
-from config.database import DatabaseConfig, initialize_database
-from config.settings import Settings, settings
-from config.ai_config import AIConfig, ai_config
-
-app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    description="AI Construction Safety Monitoring System API"
-)
+# Import worker database and face embedding modules
+from config.worker_db import worker_db
+from config.face_embedding import get_face_embedding
 
 # =========================================================
-# CORS
+# CONFIGURATION
 # =========================================================
+APP_HOST = "0.0.0.0"
+APP_PORT = 8080
+
+# MediaMTX configuration
+MEDIAMTX_RTSP_URL = os.getenv("MEDIAMTX_RTSP_URL", "rtsp://localhost:8554/sitecam")
+MEDIAMTX_WEBRTC_URL = os.getenv("MEDIAMTX_WEBRTC_URL", "http://localhost:8889/sitecam")
+MEDIAMTX_HLS_URL = os.getenv("MEDIAMTX_HLS_URL", "http://localhost:8888/sitecam/index.m3u8")
+
+# AI Worker configuration
+AI_WORKER_URL = os.getenv("AI_WORKER_URL", "http://localhost:8001")
+
+ENROLLMENT_DIR = os.path.join(os.path.dirname(__file__), "data", "images", "enrollments")
+MAX_ENROLLMENT_IMAGE_SIZE = 5 * 1024 * 1024
+
+# =========================================================
+# FASTAPI APP SETUP
+# =========================================================
+app = FastAPI(title="AI Construction Safety System", version="1.0.0")
+
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    **Settings.get_cors_config()
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:3002", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # =========================================================
-# STATIC FILES
+# GLOBAL VARIABLES
 # =========================================================
-VIOLATIONS_DIR = "data/images/violations"
-os.makedirs(VIOLATIONS_DIR, exist_ok=True)
-app.mount("/violations_files", StaticFiles(directory=VIOLATIONS_DIR), name="violations_files")
+# No camera or model variables - handled by MediaMTX + AI Worker
 
-# =========================================================
-# DATABASE CONNECTION
-# =========================================================
-def get_db_connection():
-    return DatabaseConfig.get_connection()
+# Face recognition tracking
+worker_embeddings = {}  # Cached embeddings
+last_detected_workers = {}  # Track recent detections to avoid duplicate marks (worker_id: last_timestamp)
+last_detection = {}  # Track last detection data
+
+# Camera configuration
+camera_config = {
+    "camera_source": "custom",  # 0=default webcam, 1=secondary, custom=IP camera
+    "camera_type": "ip_camera",
+    "camera_status": "disconnected",
+    "custom_url": "rtsp://192.168.1.16:554/11"  # For IP camera RTSP/HTTP URLs
+}
 
 # =========================================================
 # INITIALIZATION
 # =========================================================
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and AI model on startup"""
-    print("🚀 Starting AI Construction Safety System...")
-    
-    # Initialize database
-    if initialize_database():
-        print("✅ Database initialized successfully")
-    else:
-        print("❌ Database initialization failed")
-    
-    # Validate settings
-    errors = Settings.validate_settings()
-    if errors:
-        print("⚠️ Settings validation warnings:")
-        for error in errors:
-            print(f"  - {error}")
-    else:
-        print("✅ Settings validation passed")
-    
-    print(f"✅ {settings.APP_NAME} v{settings.APP_VERSION} started successfully")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    print("🛑 Shutting down AI Construction Safety System...")
-
-# =========================================================
-# REQUEST MODELS
-# =========================================================
-class Incident(BaseModel):
-    camera_name: str
-    violation_type: str
-    confidence: float
-    bbox_x: int
-    bbox_y: int
-    bbox_width: int
-    bbox_height: int
-    timestamp: str
-    image_path: str
-
-class ImageData(BaseModel):
-    image: str
-
-# =========================================================
-# AI MODEL LOADING (LAZY)
-# =========================================================
-model = None
-
-def load_yolo_model():
-    """Lazy load YOLO model on first use"""
-    global model, YOLO
-    if model is not None:
-        return model
-    
-    if YOLO is None:
-        try:
-            from ultralytics import YOLO as YOLOClass
-            YOLO = YOLOClass
-        except Exception as e:
-            print(f"❌ Failed to import YOLO: {e}")
-            return None
-    
-    try:
-        # Use PPE model from AIConfig
-        model_path = AIConfig.get_model_path()
-        model = YOLO(model_path)
-        print(f"✅ PPE Detection model loaded successfully!")
-        print(f"   Model: Hansung-Cho/yolov8-ppe-detection")
-        print(f"   Path: {model_path}")
-        print(f"   Confidence: {AIConfig.MODEL_CONFIDENCE}")
-        print(f"   Classes: {len(AIConfig.DETECTION_CLASSES)} (Hardhat, Vest, Mask, Person, etc.)")
-        return model
-    except Exception as e:
-        print(f"❌ Failed to load PPE model: {e}")
-        return None
-
-# =========================================================
-# AI DETECTION ENDPOINT
-# =========================================================
-@app.post("/detect_base64")
-async def detect_base64(data: ImageData):
-    try:
-        print(f"🔍 Starting AI detection process...")
-        
-        # Validate input
-        if not data.image:
-            return {"success": False, "error": "No image data provided"}
-        
-        # Lazy load YOLO model
-        yolo_model = load_yolo_model()
-        
-        # Check if model is available
-        if not yolo_model:
-            print("🤖 YOLO model not loaded, using mock detection")
-            mock_detections = ai_config.generate_mock_detections()
-            violations = ai_config.detect_violations(mock_detections)
-            
-            return {
-                "success": True,
-                "detections": mock_detections,
-                "violations": violations,
-                "model": "Mock Detection (Demo Mode)",
-                "message": "YOLO model not found - using mock detection for demo",
-                "processing_time_ms": 25
-            }
-        
-        print(f"✅ YOLO model is loaded: {type(yolo_model)}")
-        print(f"📊 Model config: confidence={ai_config.MODEL_CONFIDENCE}, iou={ai_config.MODEL_IOU_THRESHOLD}")
-        
-        # Decode base64 image
-        try:
-            if ',' in data.image:
-                # Remove data:image/jpeg;base64, prefix
-                image_data = base64.b64decode(data.image.split(',')[1])
-            else:
-                # Direct base64 string
-                image_data = base64.b64decode(data.image)
-            
-            print(f"📷 Image decoded successfully, size: {len(image_data)} bytes")
-        except Exception as e:
-            print(f"❌ Image decoding error: {e}")
-            return {"success": False, "error": f"Image decoding failed: {str(e)}"}
-        
-        # Open and process image
-        try:
-            image = Image.open(io.BytesIO(image_data))
-            print(f"🖼️ Image opened: mode={image.mode}, size={image.size}")
-            
-            # Convert to RGB if needed
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-                print(f"🔄 Converted to RGB")
-            
-            # Convert to numpy array
-            frame = np.array(image)
-            print(f"📊 Frame shape: {frame.shape}")
-            
-        except Exception as e:
-            print(f"❌ Image processing error: {e}")
-            return {"success": False, "error": f"Image processing failed: {str(e)}"}
-        
-        # Run YOLO detection
-        try:
-            start_time = time.time()
-            results = model.predict(
-                frame, 
-                conf=ai_config.MODEL_CONFIDENCE, 
-                iou=ai_config.MODEL_IOU_THRESHOLD,
-                verbose=False  # Reduce log spam
-            )
-            processing_time = (time.time() - start_time) * 1000
-            
-            print(f"🤖 YOLO inference completed in {processing_time:.2f}ms")
-            print(f"📊 Results: {len(results)} result(s)")
-            
-        except Exception as e:
-            print(f"❌ YOLO inference error: {e}")
-            return {"success": False, "error": f"YOLO inference failed: {str(e)}"}
-        
-        # Process detections
-        detections = []
-        try:
-            for i, result in enumerate(results):
-                print(f"🔍 Processing result {i+1}")
-                boxes = result.boxes
-                if boxes is not None:
-                    print(f"📦 Found {len(boxes)} boxes")
-                    for j, box in enumerate(boxes):
-                        # Get bounding box coordinates
-                        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                        confidence = float(box.conf[0].cpu().numpy())
-                        class_id = int(box.cls[0].cpu().numpy())
-                        
-                        print(f"  Box {j+1}: class_id={class_id}, confidence={confidence:.3f}, bbox=({x1:.1f},{y1:.1f},{x2:.1f},{y2:.1f})")
-                        
-                        # Map class ID to class name using AI config
-                        class_name = ai_config.DETECTION_CLASSES.get(class_id, f'unknown_{class_id}')
-                        
-                        detection = {
-                            "class_id": class_id,
-                            "class_name": class_name,
-                            "confidence": round(confidence, 3),
-                            "bbox": {
-                                "x": float(x1),
-                                "y": float(y1), 
-                                "width": float(x2 - x1),
-                                "height": float(y2 - y1)
-                            }
-                        }
-                        detections.append(detection)
-                        print(f"  ✅ Added detection: {class_name} ({confidence:.3f})")
-                else:
-                    print(f"  ❌ No boxes found in result {i+1}")
-                    
-        except Exception as e:
-            print(f"❌ Detection processing error: {e}")
-            return {"success": False, "error": f"Detection processing failed: {str(e)}"}
-        
-        print(f"📈 Total detections: {len(detections)}")
-        
-        # Detect violations
-        try:
-            violations = ai_config.detect_violations(detections)
-            print(f"⚠️ Violations detected: {len(violations)}")
-            for violation in violations:
-                print(f"  🚨 {violation.get('type', 'unknown')}: {violation.get('severity', 'medium')}")
-        except Exception as e:
-            print(f"❌ Violation detection error: {e}")
-            violations = []
-        
-        response = {
-            "success": True,
-            "detections": detections,
-            "violations": violations,
-            "model": "YOLOv8 Safety Detection",
-            "processing_time_ms": round(processing_time, 2),
-            "frame_info": {
-                "width": frame.shape[1],
-                "height": frame.shape[0],
-                "channels": frame.shape[2] if len(frame.shape) > 2 else 1
-            }
-        }
-        
-        print(f"✅ Detection completed successfully: {len(detections)} objects, {len(violations)} violations")
-        return response
-        
-    except Exception as e:
-        print(f"❌ General detection error: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"success": False, "error": f"Detection failed: {str(e)}"}
+def load_worker_embeddings():
+    """Load all worker embeddings from database"""
+    worker_embeddings = worker_db.get_all_embeddings()
+    print(f"✅ Loaded {len(worker_embeddings)} worker embeddings")
+    return worker_embeddings
 
 # =========================================================
 # API ENDPOINTS
@@ -289,299 +84,480 @@ async def detect_base64(data: ImageData):
 
 @app.get("/")
 async def root():
-    return {"message": "Construction AI Safety Monitoring System API"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "model_loaded": model is not None}
-
-@app.post("/incidents")
-async def create_incident(incident: Incident):
-    connection = get_db_connection()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    
-    try:
-        cursor = connection.cursor()
-        query = """
-        INSERT INTO incidents (camera_name, violation_type, confidence, bbox_x, bbox_y, bbox_width, bbox_height, timestamp, image_path)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(query, (
-            incident.camera_name,
-            incident.violation_type,
-            incident.confidence,
-            incident.bbox_x,
-            incident.bbox_y,
-            incident.bbox_width,
-            incident.bbox_height,
-            incident.timestamp,
-            incident.image_path
-        ))
-        connection.commit()
-        return {"message": "Incident recorded successfully", "id": cursor.lastrowid}
-    
-    except Error as e:
-        connection.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    
-    finally:
-        if cursor:
-            cursor.close()
-        connection.close()
-
-@app.get("/incidents")
-async def get_incidents(limit: int = 50):
-    connection = get_db_connection()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    
-    try:
-        cursor = connection.cursor(dictionary=True)
-        query = "SELECT * FROM incidents ORDER BY timestamp DESC LIMIT %s"
-        cursor.execute(query, (limit,))
-        incidents = cursor.fetchall()
-        return {"incidents": incidents}
-    
-    except Error as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    
-    finally:
-        if cursor:
-            cursor.close()
-        connection.close()
-
-@app.get("/stats")
-async def get_stats():
-    connection = get_db_connection()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    
-    try:
-        cursor = connection.cursor()
-        
-        # Get total incidents
-        cursor.execute("SELECT COUNT(*) FROM incidents")
-        total_incidents = cursor.fetchone()[0]
-        
-        # Get total persons (unique worker count)
-        cursor.execute("SELECT COUNT(DISTINCT camera_name) FROM incidents")
-        total_cameras = cursor.fetchone()[0]
-        
-        # Get active alerts (last 24 hours)
-        cursor.execute("SELECT COUNT(*) FROM incidents WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR)")
-        active_alerts = cursor.fetchone()[0]
-        
-        # Get total workers (mock data)
-        cursor.execute("SELECT COUNT(*) FROM incidents")
-        total_persons = cursor.fetchone()[0]
-
-        return {
-            "total_workers": total_persons,
-            "total_violations": total_incidents,
-            "active_alerts": active_alerts,
-            "connected_cameras": total_cameras if total_cameras > 0 else 1
-        }
-
-    except Error as e:
-        raise HTTPException(status_code=500, detail=f"MySQL stats error: {str(e)}")
-
-    finally:
-        if cursor:
-            cursor.close()
-        connection.close()
-
-@app.get("/dashboard/stats")
-async def get_dashboard_stats():
-    # Alias for the same stats endpoint to match frontend API
-    return await get_stats()
-
-@app.get("/violations")
-async def get_violations():
-    # Return incidents as violations for dashboard
-    connection = get_db_connection()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    
-    try:
-        cursor = connection.cursor(dictionary=True)
-        query = "SELECT * FROM incidents ORDER BY timestamp DESC LIMIT 50"
-        cursor.execute(query)
-        violations = cursor.fetchall()
-        return {"violations": violations}
-    
-    except Error as e:
-        # If table doesn't exist, return empty data
-        return {"violations": []}
-    
-    finally:
-        if cursor:
-            cursor.close()
-        connection.close()
-
-@app.get("/workers")
-async def get_workers():
-    # Mock worker data for dashboard
+    """Root endpoint"""
     return {
-        "workers": [
-            {"id": 1, "name": "John Smith", "department": "Construction", "status": "active"},
-            {"id": 2, "name": "Mike Johnson", "department": "Safety", "status": "active"},
-            {"id": 3, "name": "Sarah Wilson", "department": "Engineering", "status": "active"},
-            {"id": 4, "name": "Tom Davis", "department": "Construction", "status": "inactive"}
-        ]
+        "message": "AI Construction Safety System Backend - API Only",
+        "status": "running",
+        "architecture": "MediaMTX + AI Worker + Backend API",
+        "mediamtx_webrtc": MEDIAMTX_WEBRTC_URL,
+        "mediamtx_hls": MEDIAMTX_HLS_URL,
+        "ai_worker": AI_WORKER_URL
     }
-
-@app.get("/alerts")
-async def get_alerts():
-    # Return recent incidents as alerts
-    connection = get_db_connection()
-    if not connection:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    
-    try:
-        cursor = connection.cursor(dictionary=True)
-        query = "SELECT * FROM incidents WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY timestamp DESC"
-        cursor.execute(query)
-        alerts = cursor.fetchall()
-        return {"alerts": alerts}
-    
-    except Error as e:
-        # If table doesn't exist, return empty data
-        return {"alerts": []}
-    
-    finally:
-        if cursor:
-            cursor.close()
-        connection.close()
 
 @app.get("/cameras")
 async def get_cameras():
-    # Camera data including user's IP camera with streaming endpoint
+    """Get camera information from MediaMTX"""
     return {
         "cameras": [
-            {"id": 1, "name": "IP Camera - Construction Site", "status": "active", "location": "Main Construction Area", "ip": "192.168.1.71", "rtsp_url": "rtsp://192.168.1.71:554/11?tcp", "type": "rtsp", "stream_url": "/stream/camera/1"},
-            {"id": 2, "name": "Main Entrance", "status": "active", "location": "Front Gate", "type": "webcam"},
-            {"id": 3, "name": "Construction Area", "status": "active", "location": "Building Site", "type": "webcam"},
-            {"id": 4, "name": "Parking Lot", "status": "inactive", "location": "Parking Area", "type": "webcam"}
+            {
+                "id": 1,
+                "name": "Site Camera",
+                "status": "active",
+                "location": "Construction Site",
+                "type": "ip_camera",
+                "stream_urls": {
+                    "webrtc": f"{MEDIAMTX_WEBRTC_URL}/whep",
+                    "hls": MEDIAMTX_HLS_URL,
+                    "rtsp": MEDIAMTX_RTSP_URL
+                }
+            }
         ]
     }
 
-@app.get("/video_feed")
-def video_feed():
-    """Stream RTSP camera to browser via MJPEG - simple endpoint"""
-    from fastapi.responses import StreamingResponse
-    import cv2
-    
-    RTSP_URL = "rtsp://192.168.1.71:554/11?tcp"
-    
-    def generate_frames():
-        cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
-
-        while True:
-            success, frame = cap.read()
-            if not success:
-                continue
-
-            _, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-    return StreamingResponse(generate_frames(),
-        media_type="multipart/x-mixed-replace; boundary=frame")
-
-@app.get("/stream/camera/{camera_id}")
-async def stream_camera(camera_id: int):
-    """Stream RTSP camera to browser via MJPEG"""
-    from fastapi.responses import StreamingResponse
-    import cv2
-    
-    # Camera configuration
-    camera_config = {
-        1: {"rtsp_url": "rtsp://192.168.1.71:554/11?tcp", "name": "IP Camera - Construction Site"}
-    }
-    
-    if camera_id not in camera_config:
-        raise HTTPException(status_code=404, detail="Camera not found")
-    
-    config = camera_config[camera_id]
-    
-    def generate_frames():
-        """Generate frames from RTSP camera with stable reconnect logic"""
-        while True:
-            cap = cv2.VideoCapture(config["rtsp_url"], cv2.CAP_FFMPEG)
-            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            
-            if not cap.isOpened():
-                print(f"❌ Failed to connect to RTSP camera: {config['rtsp_url']}")
-                import time
-                time.sleep(3)
-                continue
-            
-            print(f"✅ Connected to RTSP camera: {config['name']}")
-            
-            try:
-                while True:
-                    success, frame = cap.read()
-                    if not success:
-                        print("⚠️ Frame not received, reconnecting...")
-                        break
-                    
-                    # Reduce load - resize frame
-                    frame = cv2.resize(frame, (640, 480))
-                    
-                    # Encode to JPEG
-                    _, buffer = cv2.imencode('.jpg', frame)
-                    frame_bytes = buffer.tobytes()
-                    
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            finally:
-                cap.release()
-    
-    return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
-
-@app.get("/camera/frame")
-async def get_camera_frame():
-    """Get a single JPEG frame from IP camera for polling-based display"""
-    from fastapi.responses import StreamingResponse
-    import cv2
-    import io
-    from PIL import Image
-    
-    RTSP_URL = "rtsp://192.168.1.71:554/11?tcp"
-    
+@app.get("/api/recognition/stats")
+async def get_recognition_stats():
+    """Get recognition worker statistics from AI Worker"""
+    import httpx
     try:
-        cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        
-        if not cap.isOpened():
-            # Return a blank frame if camera is not available
-            blank_frame = cv2.cvtColor(cv2.zeros((480, 640, 3), dtype="uint8"), cv2.COLOR_BGR2RGB)
-            blank_frame = cv2.putText(blank_frame, "Camera Offline", (150, 240), 
-                                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
-            _, buffer = cv2.imencode('.jpg', blank_frame)
-            return StreamingResponse(io.BytesIO(buffer.tobytes()), media_type="image/jpeg")
-        
-        # Read frames until we get a good one
-        for _ in range(5):
-            success, frame = cap.read()
-            if success:
-                # Resize for performance
-                frame = cv2.resize(frame, (640, 480))
-                _, buffer = cv2.imencode('.jpg', frame)
-                cap.release()
-                return StreamingResponse(io.BytesIO(buffer.tobytes()), media_type="image/jpeg")
-        
-        cap.release()
-        return {"error": "Could not read frame from camera"}
-        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{AI_WORKER_URL}/stats", timeout=5.0)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {
+                    "status": "error",
+                    "message": "Failed to fetch AI worker stats"
+                }
     except Exception as e:
-        print(f"❌ Error getting camera frame: {e}")
+        return {
+            "status": "error",
+            "message": f"AI worker not reachable: {str(e)}"
+        }
+
+@app.post("/api/recognition/restart")
+async def restart_recognition_worker():
+    """Restart the AI worker"""
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f"{AI_WORKER_URL}/restart", timeout=10.0)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to restart AI worker"
+                }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"AI worker not reachable: {str(e)}"
+        }
+
+# =========================================================
+# ROUTES - DASHBOARD DATA
+# =========================================================
+@app.get("/dashboard/stats")
+async def get_dashboard_stats():
+    """Get dashboard statistics"""
+    try:
+        return {
+            "total_violations": 0,
+            "total_alerts": 0,
+            "active_cameras": 1,
+            "detection_status": "active",
+            "uptime_seconds": int(time.time()),
+            "last_detection": last_detection or {}
+        }
+    except Exception as e:
         return {"error": str(e)}
 
-# Run the server
+@app.get("/violations")
+async def get_violations():
+    """Get all violations"""
+    try:
+        return {
+            "violations": [],
+            "total": 0,
+            "page": 1,
+            "total_pages": 0
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/alerts")
+async def get_alerts():
+    """Get all alerts"""
+    try:
+        return {
+            "alerts": [],
+            "total": 0,
+            "page": 1,
+            "total_pages": 0
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+# =========================================================
+# ROUTES - CAMERAS
+# =========================================================
+@app.get("/cameras")
+async def get_cameras():
+    """Get all available cameras"""
+    try:
+        return {
+            "cameras": [
+                {
+                    "id": 1,
+                    "name": "Laptop Webcam",
+                    "status": camera_status if camera is not None else "disconnected",
+                    "stream_url": "http://0.0.0.0:8002/stream"
+                }
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/cameras/{camera_id}")
+async def get_camera_detail(camera_id: int):
+    """Get specific camera details"""
+    try:
+        return {
+            "id": camera_id,
+            "name": "Laptop Webcam",
+            "status": camera_status if camera is not None else "disconnected",
+            "stream_url": "http://0.0.0.0:8002/stream"
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/cameras/{camera_id}/detection")
+async def get_camera_detection(camera_id: int):
+    """Get latest detection for camera"""
+    try:
+        return last_detection or {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "count": 0,
+            "detections": []
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/cameras/{camera_id}/detections/latest")
+async def get_camera_detections_latest(camera_id: int):
+    """Get latest detections for camera"""
+    try:
+        return last_detection or {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "count": 0,
+            "detections": []
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+# =========================================================
+# ROUTES - CAMERA CONFIGURATION
+# =========================================================
+@app.get("/api/camera/config")
+async def get_camera_config():
+    """Get current camera configuration"""
+    return {
+        "camera_source": camera_config["camera_source"],
+        "camera_type": camera_config["camera_type"],
+        "camera_status": camera_config["camera_status"],
+        "custom_url": camera_config.get("custom_url", "")
+    }
+
+@app.post("/api/camera/configure")
+async def configure_camera(source: str = Form(...), custom_url: str = Form(None)):
+    """Configure camera source"""
+    global camera_config
+    
+    try:
+        # Validate source
+        valid_sources = ["0", "1", "custom"]
+        if source not in valid_sources:
+            raise HTTPException(status_code=400, detail="Invalid camera source")
+        
+        # Update camera configuration
+        camera_config["camera_source"] = source
+        
+        if source == "custom" and custom_url:
+            camera_config["custom_url"] = custom_url
+            camera_config["camera_type"] = "ip_camera"
+            
+            # Try to determine protocol and test connection
+            if custom_url.startswith("rtsp://"):
+                camera_config["camera_type"] = "ip_camera_rtsp"
+            elif custom_url.startswith("http"):
+                camera_config["camera_type"] = "ip_camera_http"
+            
+            # Test if we can connect to the URL
+            camera_config["camera_status"] = await test_camera_connection(custom_url)
+            
+        elif source in ["0", "1"]:
+            camera_config["camera_type"] = "webcam"
+            camera_config["custom_url"] = ""
+            # Webcam is considered connected if we accept the configuration
+            camera_config["camera_status"] = "connected"
+        
+        return {
+            "success": True,
+            "message": "Camera configuration updated",
+            "camera_source": camera_config["camera_source"],
+            "camera_type": camera_config["camera_type"],
+            "camera_status": camera_config["camera_status"],
+            "custom_url": camera_config.get("custom_url", "")
+        }
+    except Exception as e:
+        camera_config["camera_status"] = "disconnected"
+        return {
+            "success": False,
+            "message": f"Failed to configure camera: {str(e)}",
+            "camera_status": "disconnected"
+        }
+
+async def test_camera_connection(url: str) -> str:
+    """Test if camera URL is reachable"""
+    import httpx
+    try:
+        async with httpx.AsyncClient(verify=False) as client:
+            # Set a short timeout for testing
+            response = await client.get(url, timeout=3.0)
+            # Just check if we get any response (even 401 means the camera is reachable)
+            if response.status_code < 500:
+                return "connected"
+            else:
+                return "disconnected"
+    except Exception as e:
+        print(f"Camera connection test failed: {str(e)}")
+        return "disconnected"
+
+# =========================================================
+# ROUTES - ATTENDANCE
+# =========================================================
+@app.get("/api/attendance/today")
+async def get_attendance_today():
+    """Get today's attendance records"""
+    try:
+        records = worker_db.get_today_attendance()
+        return {
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "records": records,
+            "total": len(records)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/attendance/employees")
+async def get_attendance_employees():
+    """Get all enrolled workers"""
+    try:
+        employees = worker_db.get_all_workers()
+        return {
+            "employees": employees,
+            "total": len(employees)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.delete("/api/attendance/employees/{worker_id}")
+async def delete_employee(worker_id: str):
+    """Delete a worker and all associated data"""
+    try:
+        if not worker_db.worker_exists(worker_id):
+            return JSONResponse(status_code=404, content={"success": False, "error": "Worker not found"})
+        
+        success = worker_db.delete_worker(worker_id)
+        
+        if success:
+            # Reload embeddings cache
+            global worker_embeddings
+            worker_embeddings = load_worker_embeddings()
+            
+            return {"success": True, "message": f"Worker {worker_id} deleted successfully"}
+        else:
+            return JSONResponse(status_code=500, content={"success": False, "error": "Failed to delete worker"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+@app.post("/api/attendance/enroll")
+async def enroll_employee(
+    worker_id: str = Form(None),
+    name: str = Form(...),
+    email: str = Form(None),
+    phone: str = Form(None),
+    image: UploadFile = File(...)
+):
+    """
+    Enroll a new worker with face image
+    Extracts face embedding from uploaded image
+    """
+    try:
+        if not name or not name.strip():
+            return JSONResponse(status_code=400, content={"success": False, "error": "Worker name is required"})
+
+        if image.content_type and not image.content_type.startswith("image/"):
+            return JSONResponse(status_code=400, content={"success": False, "error": "Please upload a valid image file"})
+
+        worker_id = (worker_id or "").strip() or f"worker_{uuid.uuid4().hex[:10]}"
+
+        if worker_db.worker_exists(worker_id):
+            return JSONResponse(status_code=409, content={"success": False, "error": f"Worker ID already exists: {worker_id}"})
+
+        image_data = await image.read()
+        if not image_data:
+            return JSONResponse(status_code=400, content={"success": False, "error": "Uploaded image is empty"})
+
+        if len(image_data) > MAX_ENROLLMENT_IMAGE_SIZE:
+            return JSONResponse(status_code=400, content={"success": False, "error": "Image must be smaller than 5 MB"})
+
+        os.makedirs(ENROLLMENT_DIR, exist_ok=True)
+        extension = os.path.splitext(image.filename or "")[1].lower() or ".jpg"
+        saved_filename = f"{worker_id}_{int(time.time())}{extension}"
+        saved_path = os.path.join(ENROLLMENT_DIR, saved_filename)
+
+        with open(saved_path, "wb") as image_file:
+            image_file.write(image_data)
+
+        # Extract face embedding
+        embedding = get_face_embedding(image_data)
+        if embedding is None:
+            if os.path.exists(saved_path):
+                os.remove(saved_path)
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "error": "Could not detect a clear face in the uploaded photo."}
+            )
+        
+        # Add worker to database
+        if not worker_db.add_worker(worker_id, name.strip(), email, phone):
+            if os.path.exists(saved_path):
+                os.remove(saved_path)
+            return JSONResponse(status_code=500, content={"success": False, "error": "Failed to save worker profile"})
+        
+        # Store face embedding
+        if not worker_db.store_embedding(worker_id, embedding):
+            return JSONResponse(status_code=500, content={"success": False, "error": "Failed to store face embedding"})
+        
+        # Reload embeddings in memory
+        global worker_embeddings
+        worker_embeddings[worker_id] = embedding
+        
+        return {
+            "success": True,
+            "message": "Worker enrolled successfully",
+            "worker_id": worker_id,
+            "name": name.strip(),
+            "image_path": saved_path
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+@app.get("/api/attendance/{employee_id}")
+async def get_employee_attendance(employee_id: str):
+    """Get attendance history for a specific worker (last 30 days)"""
+    try:
+        records = worker_db.get_worker_attendance(employee_id, days=30)
+        return {
+            "employee_id": employee_id,
+            "records": records,
+            "total": len(records)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/attendance/mark")
+async def mark_attendance(data: dict):
+    """Manually mark attendance (check-in/check-out)"""
+    try:
+        worker_id = (data.get("employee_id") or data.get("worker_id") or "").strip()
+        event_type = (data.get("event_type") or "check_in").strip()
+
+        if not worker_id:
+            return JSONResponse(status_code=400, content={"success": False, "error": "Worker ID is required"})
+
+        if event_type not in {"check_in", "check_out"}:
+            return JSONResponse(status_code=400, content={"success": False, "error": "event_type must be check_in or check_out"})
+
+        if not worker_db.worker_exists(worker_id):
+            return JSONResponse(status_code=404, content={"success": False, "error": f"Worker not found: {worker_id}"})
+
+        success = worker_db.mark_attendance(worker_id, event_type=event_type, detected_by="manual")
+        if not success:
+            return JSONResponse(
+                status_code=409,
+                content={"success": False, "error": f"Could not mark {event_type.replace('_', ' ')} for {worker_id}"}
+            )
+        
+        return {
+            "success": True,
+            "message": f"Attendance marked: {event_type}",
+            "worker_id": worker_id
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+# =========================================================
+# ROUTES - WORKERS
+# =========================================================
+@app.get("/workers")
+async def get_workers():
+    """Get all active workers"""
+    try:
+        workers = worker_db.get_all_workers()
+        return {
+            "workers": workers,
+            "total": len(workers)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/workers")
+async def create_worker(data: dict):
+    """Create a new worker profile"""
+    try:
+        worker_id = data.get("worker_id", str(uuid.uuid4())[:8])
+        name = data.get("name")
+        email = data.get("email")
+        phone = data.get("phone")
+        
+        worker_db.add_worker(worker_id, name, email, phone)
+        
+        return {
+            "success": True,
+            "worker_id": worker_id,
+            "message": "Worker created successfully"
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.on_event("startup")
+async def startup_event():
+    """Startup initialization"""
+    print("=" * 60)
+    print("Starting AI Construction Safety System Backend - API Only")
+    print("=" * 60)
+
+    os.makedirs(ENROLLMENT_DIR, exist_ok=True)
+    
+    # Load worker embeddings
+    load_worker_embeddings()
+    
+    print(f"✅ Backend started on http://{APP_HOST}:{APP_PORT}")
+    print(f"✅ MediaMTX WebRTC: {MEDIAMTX_WEBRTC_URL}")
+    print(f"✅ MediaMTX HLS: {MEDIAMTX_HLS_URL}")
+    print(f"✅ AI Worker: {AI_WORKER_URL}")
+    print("=" * 60)
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Shutdown cleanup"""
+    print("✅ Backend shutdown complete")
+
+# =========================================================
+# MAIN
+# =========================================================
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT)
