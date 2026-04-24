@@ -1,5 +1,5 @@
 // Environment Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT || '10000');
 const LOG_LEVEL = process.env.REACT_APP_LOG_LEVEL || 'info';
 const ENABLE_DEBUG = process.env.REACT_APP_DEBUG === 'true' || false;
